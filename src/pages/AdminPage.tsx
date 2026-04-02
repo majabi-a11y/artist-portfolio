@@ -2,8 +2,9 @@ import { useState, useRef } from 'react';
 import { useSiteData } from '../contexts/SiteDataContext';
 import { Save, Plus, Trash2, Download, Upload, RotateCcw, ChevronDown, ChevronRight, Bell, Send } from 'lucide-react';
 import type { Artwork, NewsPost, PortfolioItem } from '../data/defaultData';
+import { TEXT_PALETTES } from '../App';
 
-type Section = 'profile' | 'artworks' | 'news' | 'exhibitions' | 'press' | 'portfolio' | 'notifications' | 'tools';
+type Section = 'profile' | 'artworks' | 'news' | 'exhibitions' | 'press' | 'portfolio' | 'notifications' | 'theme' | 'tools';
 
 export default function AdminPage() {
   const {
@@ -13,6 +14,7 @@ export default function AdminPage() {
     addExhibition, deleteExhibition,
     addPress, updatePress, deletePress,
     addPortfolio, updatePortfolio, deletePortfolio,
+    updateTheme,
     exportData, importData, resetData,
   } = useSiteData();
 
@@ -30,6 +32,7 @@ export default function AdminPage() {
     { id: 'press', label: 'Presse', count: data.press.length },
     { id: 'portfolio', label: 'Portfolio', count: (data.portfolio || []).length },
     { id: 'notifications', label: 'Notifs' },
+    { id: 'theme', label: 'Thème' },
     { id: 'tools', label: 'Outils' },
   ];
 
@@ -595,6 +598,80 @@ export default function AdminPage() {
 
         {/* ════════ NOTIFICATIONS ════════ */}
         {activeSection === 'notifications' && <NotificationsSection />}
+
+        {/* ════════ THEME ════════ */}
+        {activeSection === 'theme' && (
+          <div className="admin-section animate-in">
+            <h2 className="admin-section-title">Thème</h2>
+
+            {/* Background color */}
+            <h3 className="admin-subsection">Couleur de fond</h3>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '20px' }}>
+              <label style={{ position: 'relative', cursor: 'pointer' }}>
+                <div style={{
+                  width: '48px', height: '48px', borderRadius: '10px',
+                  background: data.theme?.bgColor || '#0a0a0a',
+                  border: '2px solid rgba(255,255,255,0.12)',
+                }} />
+                <input type="color" value={data.theme?.bgColor || '#0a0a0a'}
+                  onChange={e => updateTheme({ bgColor: e.target.value })}
+                  style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
+              </label>
+              <div>
+                <input className="admin-input" value={data.theme?.bgColor || '#0a0a0a'}
+                  onChange={e => updateTheme({ bgColor: e.target.value })}
+                  style={{ width: '100px', marginBottom: 0, fontFamily: 'monospace', fontSize: '0.7rem' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {['#0a0a0a', '#0d1117', '#1a1a2e', '#0f0f0f', '#141414', '#0a0e17', '#1a0e0e', '#0e1a15'].map(c => (
+                  <button key={c} onClick={() => updateTheme({ bgColor: c })}
+                    style={{
+                      width: '28px', height: '28px', borderRadius: '6px', background: c,
+                      border: (data.theme?.bgColor || '#0a0a0a') === c ? '2px solid var(--color-accent)' : '1px solid rgba(255,255,255,0.1)',
+                      cursor: 'pointer',
+                    }} />
+                ))}
+              </div>
+            </div>
+
+            {/* Text palettes */}
+            <h3 className="admin-subsection">Palette de couleurs</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px' }}>
+              {Object.entries(TEXT_PALETTES).map(([id, p]) => {
+                const isActive = (data.theme?.paletteId || 'warm') === id;
+                return (
+                  <button key={id}
+                    onClick={() => updateTheme({ paletteId: id })}
+                    style={{
+                      background: data.theme?.bgColor || '#0a0a0a',
+                      border: isActive ? `2px solid ${p.accent}` : '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '12px',
+                      padding: '14px 12px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'border-color 0.2s',
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: p.accent }} />
+                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: p.text }} />
+                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: p.textSecondary }} />
+                    </div>
+                    <div style={{ color: p.text, fontSize: '0.8rem', fontWeight: 600, marginBottom: '2px' }}>
+                      {p.name}
+                    </div>
+                    <div style={{ color: p.accent, fontSize: '0.65rem' }}>
+                      Titre d'exemple
+                    </div>
+                    <div style={{ color: p.textSecondary, fontSize: '0.6rem' }}>
+                      Sous-titre secondaire
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ════════ TOOLS ════════ */}
         {activeSection === 'tools' && (

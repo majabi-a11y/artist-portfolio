@@ -62,6 +62,11 @@ export interface PortfolioItem {
   category: string;
 }
 
+export interface ThemeConfig {
+  bgColor: string;
+  paletteId: string;
+}
+
 export interface SiteData {
   profile: ArtistProfile;
   artworks: Artwork[];
@@ -69,6 +74,7 @@ export interface SiteData {
   exhibitions: Exhibition[];
   press: PressItem[];
   portfolio: PortfolioItem[];
+  theme: ThemeConfig;
 }
 
 export const defaultSiteData: SiteData = {
@@ -263,4 +269,8 @@ export const defaultSiteData: SiteData = {
     { id: '2', title: 'Fresque — Hôtel Le Marais', description: 'Fresque murale de 12m pour le lobby de l\'hôtel.', image: '', link: '', category: 'Mural' },
     { id: '3', title: 'Collaboration — Nike', description: 'Collection capsule avec application du motif matriciel sur textile.', image: '', link: '', category: 'Collaboration' },
   ],
+  theme: {
+    bgColor: '#0a0a0a',
+    paletteId: 'warm',
+  },
 };

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import { defaultSiteData, type SiteData, type Artwork, type NewsPost, type Exhibition, type PressItem, type PortfolioItem, type ArtistProfile } from '../data/defaultData';
+import { defaultSiteData, type SiteData, type Artwork, type NewsPost, type Exhibition, type PressItem, type PortfolioItem, type ThemeConfig, type ArtistProfile } from '../data/defaultData';
 
 const STORAGE_KEY = 'artist-site-data';
 
@@ -34,6 +34,7 @@ interface SiteDataContextType {
   addPortfolio: (item: PortfolioItem) => void;
   updatePortfolio: (id: string, updates: Partial<PortfolioItem>) => void;
   deletePortfolio: (id: string) => void;
+  updateTheme: (updates: Partial<ThemeConfig>) => void;
   exportData: () => string;
   importData: (json: string) => boolean;
   resetData: () => void;
@@ -150,6 +151,10 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     saveData(defaultSiteData);
   }, []);
 
+  const updateTheme = useCallback((updates: Partial<ThemeConfig>) => {
+    update(d => ({ ...d, theme: { ...(d.theme || { bgColor: '#0a0a0a', paletteId: 'warm' }), ...updates } }));
+  }, [update]);
+
   return (
     <SiteDataContext.Provider value={{
       data,
@@ -159,6 +164,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
       setExhibitions, addExhibition, deleteExhibition,
       setPress, addPress, updatePress, deletePress,
       addPortfolio, updatePortfolio, deletePortfolio,
+      updateTheme,
       exportData, importData, resetData,
     }}>
       {children}
