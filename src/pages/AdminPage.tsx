@@ -215,6 +215,31 @@ export default function AdminPage() {
               )}
             </div>
 
+            {/* App icon */}
+            <h3 className="admin-subsection">Icône de l'app</h3>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+              {data.profile.appIcon ? (
+                <div style={{ position: 'relative' }}>
+                  <img src={data.profile.appIcon} alt="" style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }} />
+                  <button onClick={() => updateProfile({ appIcon: '' })}
+                    style={{ position: 'absolute', top: '-4px', right: '-4px', background: 'rgba(0,0,0,0.8)', color: '#fff', border: 'none', width: '18px', height: '18px', borderRadius: '50%', fontSize: '0.5rem', cursor: 'pointer', lineHeight: 1 }}>✕</button>
+                </div>
+              ) : (
+                <label style={{ width: '64px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.12)', borderRadius: '12px', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--color-text-muted)' }}>
+                  +
+                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => updateProfile({ appIcon: reader.result as string });
+                    reader.readAsDataURL(file);
+                    e.target.value = '';
+                  }} />
+                </label>
+              )}
+              <span style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)' }}>Image carrée recommandée (512×512 px)</span>
+            </div>
+
             <AdminField label="Nom" value={data.profile.name}
               onChange={v => updateProfile({ name: v })} />
             <AdminField label="Tagline" value={data.profile.tagline}

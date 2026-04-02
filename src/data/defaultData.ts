@@ -9,6 +9,7 @@ export interface ArtistProfile {
   techniqueTitle: string;
   birthInfo: string;
   heroBanner: string;
+  appIcon: string;
   bio: string[];
   stats: { label: string; value: string }[];
   contact: { label: string; value: string }[];
@@ -77,6 +78,7 @@ export const defaultSiteData: SiteData = {
     techniqueTitle: 'Peinture matricielle horizontale',
     birthInfo: 'Artiste peintre — Né en 1992, Lisbonne',
     heroBanner: '',
+    appIcon: '',
     bio: [
       'Né en 1992 à Lisbonne, Adrien Da Silva vit et travaille à Paris depuis 2015. Diplômé des Beaux-Arts de Paris (ENSBA) en 2016, il développe dès ses premières années une technique picturale singulière qu\'il nomme la trame matricielle horizontale.',
       'Son travail se situe à la croisée de l\'art numérique et de la peinture traditionnelle. Chaque toile est construite ligne par ligne, tiret par tiret, avec une patience méticuleuse. Les traits — toujours horizontaux — se terminent par un demi-cercle parfait, donnant à chaque marque une qualité de capsule organique.',
