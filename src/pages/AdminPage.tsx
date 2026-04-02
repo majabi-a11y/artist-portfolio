@@ -1,9 +1,9 @@
 import { useState, useRef } from 'react';
 import { useSiteData } from '../contexts/SiteDataContext';
-import { Save, Plus, Trash2, Download, Upload, RotateCcw, ChevronDown, ChevronRight } from 'lucide-react';
+import { Save, Plus, Trash2, Download, Upload, RotateCcw, ChevronDown, ChevronRight, Bell, Send } from 'lucide-react';
 import type { Artwork, NewsPost, PortfolioItem } from '../data/defaultData';
 
-type Section = 'profile' | 'artworks' | 'news' | 'exhibitions' | 'press' | 'portfolio' | 'tools';
+type Section = 'profile' | 'artworks' | 'news' | 'exhibitions' | 'press' | 'portfolio' | 'notifications' | 'tools';
 
 export default function AdminPage() {
   const {
@@ -29,6 +29,7 @@ export default function AdminPage() {
     { id: 'exhibitions', label: 'Expositions', count: data.exhibitions.length },
     { id: 'press', label: 'Presse', count: data.press.length },
     { id: 'portfolio', label: 'Portfolio', count: (data.portfolio || []).length },
+    { id: 'notifications', label: 'Notifs' },
     { id: 'tools', label: 'Outils' },
   ];
 
@@ -592,6 +593,9 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ════════ NOTIFICATIONS ════════ */}
+        {activeSection === 'notifications' && <NotificationsSection />}
+
         {/* ════════ TOOLS ════════ */}
         {activeSection === 'tools' && (
           <div className="admin-section animate-in">
@@ -662,6 +666,137 @@ function AdminSelect({ label, value, options, onChange }: {
         onChange={e => onChange(e.target.value)}>
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
+    </div>
+  );
+}
+
+const ONESIGNAL_APP_ID = 'b224b657-b135-4fb7-b942-82277aebd8d6';
+
+function NotificationsSection() {
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('onesignal-api-key') || '');
+  const [showKey, setShowKey] = useState(false);
+  const [title, setTitle] = useState('');
+  const [message, setMessage] = useState('');
+  const [url, setUrl] = useState('');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const saveKey = (key: string) => {
+    setApiKey(key);
+    localStorage.setItem('onesignal-api-key', key);
+  };
+
+  const handleSend = async () => {
+    if (!apiKey) { setErrorMsg('Ajoute ta REST API Key d\'abord'); setStatus('error'); return; }
+    if (!title || !message) { setErrorMsg('Titre et message requis'); setStatus('error'); return; }
+
+    setStatus('sending');
+    try {
+      const body: Record<string, unknown> = {
+        app_id: ONESIGNAL_APP_ID,
+        included_segments: ['All'],
+        headings: { en: title },
+        contents: { en: message },
+      };
+      if (url) body.url = url;
+
+      const res = await fetch('https://onesignal.com/api/v1/notifications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${apiKey}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setStatus('success');
+        setTitle('');
+        setMessage('');
+        setUrl('');
+        setErrorMsg(`Notification envoyée à ${data.recipients || 0} abonné(s) !`);
+        setTimeout(() => setStatus('idle'), 3000);
+      } else {
+        const err = await res.json();
+        setStatus('error');
+        setErrorMsg(err.errors?.[0] || 'Erreur d\'envoi');
+      }
+    } catch {
+      setStatus('error');
+      setErrorMsg('Erreur réseau');
+    }
+  };
+
+  return (
+    <div className="admin-section animate-in">
+      <h2 className="admin-section-title">
+        <Bell size={16} style={{ marginRight: '6px', verticalAlign: '-2px' }} />
+        Notifications Push
+      </h2>
+
+      {/* API Key config */}
+      <div className="admin-card" style={{ padding: '12px', marginBottom: '16px' }}>
+        <label className="admin-label">REST API Key (OneSignal)</label>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <input
+            className="admin-input"
+            type={showKey ? 'text' : 'password'}
+            value={apiKey}
+            onChange={e => saveKey(e.target.value)}
+            placeholder="Colle ta clé ici (Settings → Keys & IDs)"
+            style={{ flex: 1, marginBottom: 0 }}
+          />
+          <button className="btn btn-sm btn-outline" onClick={() => setShowKey(!showKey)}
+            style={{ fontSize: '0.65rem', whiteSpace: 'nowrap' }}>
+            {showKey ? 'Masquer' : 'Voir'}
+          </button>
+        </div>
+        <p style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+          Trouve la clé dans <a href="https://app.onesignal.com" target="_blank" rel="noopener" style={{ color: 'var(--color-accent)' }}>OneSignal</a> → Settings → Keys & IDs → REST API Key
+        </p>
+      </div>
+
+      {/* Compose */}
+      <div className="admin-card" style={{ padding: '16px' }}>
+        <h3 className="admin-subsection" style={{ margin: '0 0 12px' }}>Composer une notification</h3>
+
+        <div style={{ marginBottom: '10px' }}>
+          <label className="admin-label">Titre</label>
+          <input className="admin-input" value={title} onChange={e => setTitle(e.target.value)}
+            placeholder="ex: Nouvelle œuvre disponible !" style={{ marginBottom: 0 }} />
+        </div>
+
+        <div style={{ marginBottom: '10px' }}>
+          <label className="admin-label">Message</label>
+          <textarea className="admin-input" value={message} onChange={e => setMessage(e.target.value)}
+            placeholder="ex: Découvrez 'Sunset Reflections', ma dernière toile..."
+            rows={3} style={{ resize: 'vertical', minHeight: '60px' }} />
+        </div>
+
+        <div style={{ marginBottom: '12px' }}>
+          <label className="admin-label">URL (optionnel)</label>
+          <input className="admin-input" value={url} onChange={e => setUrl(e.target.value)}
+            placeholder="ex: https://adriendasilva.vercel.app/catalogue/1" style={{ marginBottom: 0 }} />
+        </div>
+
+        {status === 'error' && (
+          <p style={{ fontSize: '0.7rem', color: '#e53e3e', marginBottom: '8px' }}>{errorMsg}</p>
+        )}
+        {status === 'success' && (
+          <p style={{ fontSize: '0.7rem', color: '#38a169', marginBottom: '8px' }}>{errorMsg}</p>
+        )}
+
+        <button
+          className="btn btn-primary btn-block"
+          onClick={handleSend}
+          disabled={status === 'sending'}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+        >
+          <Send size={14} />
+          {status === 'sending' ? 'Envoi...' : 'Envoyer la notification'}
+        </button>
+      </div>
     </div>
   );
 }
