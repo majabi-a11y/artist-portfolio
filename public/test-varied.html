@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head><title>Filter Standalone Test</title></head>
+<body style="background:#222;color:#fff;font-family:sans-serif;padding:20px">
+<h2>Varied Capsule Filter Test</h2>
+<div style="display:flex;gap:20px;flex-wrap:wrap">
+  <div>
+    <h3>Source Image</h3>
+    <canvas id="source" style="border:1px solid #555"></canvas>
+  </div>
+  <div>
+    <h3>Filtered Output</h3>
+    <canvas id="output" style="border:1px solid #555"></canvas>
+  </div>
+</div>
+
+<script type="module">
+import { applyDaSilvaFilter, DEFAULT_OPTIONS } from '/src/utils/artFilter.ts';
+
+const sourceCanvas = document.getElementById('source');
+const outputCanvas = document.getElementById('output');
+sourceCanvas.width = 500;
+sourceCanvas.height = 400;
+
+const ctx = sourceCanvas.getContext('2d');
+
+// Draw gradient background
+const grad = ctx.createRadialGradient(250, 200, 20, 250, 200, 220);
+grad.addColorStop(0, '#000000');
+grad.addColorStop(0.3, '#4a1942');
+grad.addColorStop(0.6, '#ff6b9d');
+grad.addColorStop(1, '#ffffff');
+ctx.fillStyle = grad;
+ctx.fillRect(0, 0, 500, 400);
+
+// Add high-contrast shapes
+ctx.fillStyle = '#ffffff';
+ctx.fillRect(20, 20, 100, 80);
+
+ctx.fillStyle = '#000000';
+ctx.fillRect(380, 20, 100, 80);
+
+ctx.fillStyle = '#886644';
+ctx.fillRect(20, 300, 100, 80);
+
+ctx.fillStyle = '#ff4488';
+ctx.fillRect(380, 300, 100, 80);
+
+// Mid-gray circle
+ctx.fillStyle = '#808080';
+ctx.beginPath();
+ctx.arc(250, 200, 60, 0, Math.PI * 2);
+ctx.fill();
+
+// Read pixel data and apply filter
+const imageData = ctx.getImageData(0, 0, 500, 400);
+applyDaSilvaFilter(imageData, outputCanvas, DEFAULT_OPTIONS);
+</script>
+</body>
+</html>

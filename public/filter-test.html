@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head><title>Filter Test</title></head>
+<body style="background:#222;color:#fff;font-family:sans-serif;padding:20px">
+<h2>Filter Test Page</h2>
+<p>This page tests the filter with a generated gradient image.</p>
+<div style="display:flex;gap:20px;flex-wrap:wrap">
+  <div>
+    <h3>Source Image</h3>
+    <canvas id="source" style="border:1px solid #555"></canvas>
+  </div>
+  <div>
+    <h3>Filtered Output</h3>
+    <canvas id="output" style="border:1px solid #555"></canvas>
+  </div>
+</div>
+<pre id="log" style="margin-top:20px;padding:10px;background:#111;font-size:12px;max-height:300px;overflow:auto"></pre>
+
+<script type="module">
+import { applyDaSilvaFilter, DEFAULT_OPTIONS } from '/src/utils/artFilter.ts';
+
+const log = document.getElementById('log');
+function addLog(msg) {
+  log.textContent += msg + '\n';
+  console.log(msg);
+}
+
+// Override console.log to capture filter debug output
+const origLog = console.log;
+const origWarn = console.warn;
+console.log = (...args) => { addLog(args.join(' ')); origLog(...args); };
+console.warn = (...args) => { addLog('WARN: ' + args.join(' ')); origWarn(...args); };
+
+// Create test image with clear contrast
+const sourceCanvas = document.getElementById('source');
+const outputCanvas = document.getElementById('output');
+sourceCanvas.width = 400;
+sourceCanvas.height = 300;
+
+const ctx = sourceCanvas.getContext('2d');
+
+// Draw gradient background
+const grad = ctx.createRadialGradient(200, 150, 20, 200, 150, 180);
+grad.addColorStop(0, '#000000');
+grad.addColorStop(0.4, '#4a1942');
+grad.addColorStop(0.7, '#ff6b9d');
+grad.addColorStop(1, '#ffffff');
+ctx.fillStyle = grad;
+ctx.fillRect(0, 0, 400, 300);
+
+// Add a white rectangle
+ctx.fillStyle = '#ffffff';
+ctx.fillRect(30, 30, 80, 80);
+
+// Add a black rectangle
+ctx.fillStyle = '#000000';
+ctx.fillRect(290, 30, 80, 80);
+
+// Add some mid-tone areas
+ctx.fillStyle = '#886644';
+ctx.fillRect(30, 190, 80, 80);
+
+ctx.fillStyle = '#ff4488';
+ctx.fillRect(290, 190, 80, 80);
+
+addLog('Source canvas created: 400x300');
+
+// Read pixel data
+const imageData = ctx.getImageData(0, 0, 400, 300);
+addLog(`ImageData: ${imageData.width}x${imageData.height}, ${imageData.data.length} bytes`);
+
+// Check some pixel values
+const topLeft = (0 * 400 + 0) * 4;
+const center = (150 * 400 + 200) * 4;
+const bottomRight = (299 * 400 + 399) * 4;
+addLog(`TL pixel: rgba(${imageData.data[topLeft]}, ${imageData.data[topLeft+1]}, ${imageData.data[topLeft+2]}, ${imageData.data[topLeft+3]})`);
+addLog(`Center pixel: rgba(${imageData.data[center]}, ${imageData.data[center+1]}, ${imageData.data[center+2]}, ${imageData.data[center+3]})`);
+addLog(`BR pixel: rgba(${imageData.data[bottomRight]}, ${imageData.data[bottomRight+1]}, ${imageData.data[bottomRight+2]}, ${imageData.data[bottomRight+3]})`);
+
+// Apply filter
+addLog('Applying filter...');
+applyDaSilvaFilter(imageData, outputCanvas, DEFAULT_OPTIONS);
+addLog('Filter complete!');
+</script>
+</body>
+</html>

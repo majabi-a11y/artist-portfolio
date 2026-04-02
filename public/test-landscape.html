@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head><title>Landscape Filter Test</title></head>
+<body style="background:#222;color:#fff;font-family:sans-serif;padding:20px">
+<h2>Landscape Halftone Filter Test</h2>
+<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
+  <div>
+    <h3>Source Image</h3>
+    <img id="sourceImg" src="/landscape-test.png" style="max-width:500px;border:1px solid #555" />
+  </div>
+  <div>
+    <h3>Filtered Output</h3>
+    <canvas id="output" style="max-width:500px;border:1px solid #555"></canvas>
+  </div>
+</div>
+
+<script type="module">
+import { applyDaSilvaFilter, extractImageData, DEFAULT_OPTIONS } from '/src/utils/artFilter.ts';
+
+const img = document.getElementById('sourceImg');
+const outputCanvas = document.getElementById('output');
+
+img.onload = () => {
+  const imageData = extractImageData(img, 800, 800);
+  applyDaSilvaFilter(imageData, outputCanvas, DEFAULT_OPTIONS);
+};
+
+// If already loaded
+if (img.complete) {
+  const imageData = extractImageData(img, 800, 800);
+  applyDaSilvaFilter(imageData, outputCanvas, DEFAULT_OPTIONS);
+}
+</script>
+</body>
+</html>
