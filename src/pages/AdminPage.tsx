@@ -86,6 +86,57 @@ export default function AdminPage() {
     setEditingNews(id);
   };
 
+  // ── Password gate ──
+  const ADMIN_PASSWORD = 'BabyLove';
+  const [isAuthenticated, setIsAuthenticated] = useState(() =>
+    sessionStorage.getItem('admin-auth') === 'true'
+  );
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('admin-auth', 'true');
+    } else {
+      setPasswordError(true);
+      setTimeout(() => setPasswordError(false), 1500);
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <form onSubmit={handleLogin} style={{ textAlign: 'center', width: '280px' }}>
+          <h1 style={{ fontSize: '1.8rem', marginBottom: '8px' }}>Admin</h1>
+          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '24px' }}>
+            Entrez le mot de passe pour accéder au panneau d'administration.
+          </p>
+          <input
+            type="password"
+            className="admin-input"
+            placeholder="Mot de passe"
+            value={passwordInput}
+            onChange={e => { setPasswordInput(e.target.value); setPasswordError(false); }}
+            style={{
+              textAlign: 'center',
+              marginBottom: '12px',
+              borderColor: passwordError ? '#e53e3e' : undefined,
+            }}
+            autoFocus
+          />
+          {passwordError && (
+            <p style={{ fontSize: '0.7rem', color: '#e53e3e', marginBottom: '8px' }}>Mot de passe incorrect</p>
+          )}
+          <button type="submit" className="btn btn-primary btn-block">
+            Connexion
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className="page" id="admin-page" style={{ paddingBottom: '100px' }}>
       <div className="page-header">
