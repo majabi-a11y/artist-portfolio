@@ -1,0 +1,4 @@
+.env*
+.vercel-ancien-compte
+node_modules
+dist

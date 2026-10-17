@@ -15,7 +15,9 @@
     "vite": "^8.0.1"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
     "@vitejs/plugin-react": "^6.0.1",
+    "firebase": "^12.11.0",
     "lucide-react": "^1.7.0",
     "react-router-dom": "^7.13.2"
   }

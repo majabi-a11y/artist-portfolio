@@ -1,23 +1,17 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSiteData } from '../contexts/SiteDataContext';
 import type { Artwork } from '../data/defaultData';
-import { Search } from 'lucide-react';
+import { thumb, formatPrice, CATALOGUE_PDF } from '../data/defaultData';
+import BackButton from '../components/BackButton';
+import { Search, Download } from 'lucide-react';
 
-const categories = ['Tout', 'toile', 'fresque', 'graphisme', 'serigraphie', 'objets'];
 const categoryLabels: Record<string, string> = {
-  Tout: 'Tout',
   toile: 'Toiles',
-  fresque: 'Fresques',
-  graphisme: 'Graphisme',
+  papier: 'Papiers',
   serigraphie: 'Sérigraphies',
+  graphisme: 'Graphisme',
   objets: 'Objets',
-};
-
-const artworkImages: Record<string, string> = {
-  '1': '/artwork-1.png',
-  '3': '/artwork-3.png',
-  '4': '/artwork-4.png',
 };
 
 export default function CataloguePage() {
@@ -26,123 +20,102 @@ export default function CataloguePage() {
   const [activeCategory, setActiveCategory] = useState('Tout');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filtered = data.artworks.filter((artwork: Artwork) => {
-    const matchesCategory = activeCategory === 'Tout' || artwork.category === activeCategory;
-    const matchesSearch = !searchQuery ||
-      artwork.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      artwork.technique.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const storeArtworks = useMemo(() => data.artworks.filter(a => a.category !== 'fresque'), [data.artworks]);
+
+  // Seules les catégories présentes au catalogue deviennent des filtres.
+  const categories = useMemo(() => {
+    const present = new Set(storeArtworks.map(a => a.category));
+    return ['Tout', ...Object.keys(categoryLabels).filter(c => present.has(c as Artwork['category']))];
+  }, [storeArtworks]);
+
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return storeArtworks.filter((artwork: Artwork) => {
+      const matchesCategory = activeCategory === 'Tout' || artwork.category === activeCategory;
+      const matchesSearch = !q ||
+        artwork.title.toLowerCase().includes(q) ||
+        artwork.technique.toLowerCase().includes(q);
+      return matchesCategory && matchesSearch;
+    });
+  }, [storeArtworks, activeCategory, searchQuery]);
 
   return (
     <div className="page" id="catalogue-page">
       <div className="page-header">
+        <BackButton />
         <h1>Catalogue</h1>
-        <p>{data.artworks.length} œuvres</p>
+        <p>{storeArtworks.length} œuvres · 2026</p>
       </div>
 
-      <div style={{ padding: '0 24px 20px' }}>
-        {/* Search */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          paddingBottom: '16px',
-          borderBottom: '1px solid rgba(255,255,255,0.04)',
-          marginBottom: '14px',
-        }}>
-          <Search size={15} color="rgba(255,255,255,0.2)" strokeWidth={1.5} />
+      <div className="catalogue-tools">
+        <a className="catalogue-pdf" href={CATALOGUE_PDF} download>
+          <Download size={14} strokeWidth={1.5} />
+          Catalogue PDF
+        </a>
+
+        <div className="catalogue-search">
+          <Search size={15} strokeWidth={1.5} />
           <input
             type="text"
-            placeholder="Rechercher..."
+            placeholder="Rechercher une œuvre, une technique…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             id="catalogue-search"
-            style={{
-              border: 'none',
-              background: 'transparent',
-              outline: 'none',
-              flex: 1,
-              fontSize: '0.82rem',
-              color: 'var(--color-white)',
-              fontWeight: 300,
-              letterSpacing: '0.02em',
-            }}
           />
         </div>
 
-        {/* Category filters */}
-        <div className="filter-chips">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              className={`chip ${activeCategory === cat ? 'active' : ''}`}
-              onClick={() => setActiveCategory(cat)}
-              id={`chip-${cat}`}
-            >
-              {categoryLabels[cat]}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ marginTop: '14px' }}>
-          <span style={{
-            fontSize: '0.6rem',
-            color: 'var(--color-text-muted)',
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            fontWeight: 400,
-          }}>
-            {filtered.length} résultat{filtered.length > 1 ? 's' : ''}
-          </span>
-        </div>
+        {categories.length > 2 && (
+          <div className="filter-chips">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                className={`chip ${activeCategory === cat ? 'active' : ''}`}
+                onClick={() => setActiveCategory(cat)}
+                id={`chip-${cat}`}
+              >
+                {cat === 'Tout' ? 'Tout' : categoryLabels[cat]}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Editorial feed layout */}
-      <div className="artwork-feed stagger-children">
+      <div className="gallery-grid">
         {filtered.map((artwork) => (
-          <div
+          <button
             key={artwork.id}
-            className="artwork-feed-item"
+            className="gallery-item"
             onClick={() => navigate(`/catalogue/${artwork.id}`)}
             id={`artwork-card-${artwork.id}`}
           >
-            {artwork.images?.[0] || artworkImages[artwork.id] ? (
-              <img
-                src={artwork.images?.[0] || artworkImages[artwork.id]}
-                alt={artwork.title}
-                className="artwork-image"
-              />
-            ) : (
-              <div className={`artwork-image artwork-placeholder variant-${(parseInt(artwork.id) % 4) + 1}`}>
-                {artwork.title.charAt(0)}
-              </div>
-            )}
-            <div className="artwork-caption">
-              <div>
-                <div className="artwork-title">{artwork.title}</div>
-                <div className="artwork-meta" style={{ marginTop: '2px' }}>
-                  {artwork.technique.split('—')[0].trim()}
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div className="artwork-meta">{artwork.year}</div>
-                {artwork.price && (
-                  <div style={{
-                    fontSize: '0.72rem',
-                    fontWeight: 400,
-                    marginTop: '2px',
-                    color: 'var(--color-accent)',
-                    fontFamily: 'var(--font-body)',
-                  }}>
-                    {artwork.price}
-                  </div>
-                )}
-              </div>
+            <div className="gallery-frame">
+              {artwork.images?.[0] ? (
+                <img src={thumb(artwork.images[0])} alt={artwork.title} loading="lazy" />
+              ) : (
+                <span className="gallery-empty">{artwork.title.charAt(0)}</span>
+              )}
             </div>
-          </div>
+            <div className="gallery-caption">
+              <span className="artwork-title">{artwork.title}</span>
+              <span className="gallery-meta">
+                {[artwork.dimensions, artwork.year].filter(Boolean).join(' · ')}
+              </span>
+              <span className={`gallery-price ${artwork.status === 'sold' ? 'is-sold' : ''}`}>
+                {artwork.status === 'sold' ? 'Vendue' : artwork.price ? formatPrice(artwork.price) : ''}
+              </span>
+            </div>
+          </button>
         ))}
       </div>
+
+      {filtered.length === 0 && (
+        <div className="empty-state">
+          <div className="empty-state-title">Aucun résultat</div>
+          <div className="empty-state-desc">
+            Essayez une autre recherche ou modifiez les filtres.
+          </div>
+        </div>
+      )}
     </div>
   );
 }

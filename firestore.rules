@@ -1,0 +1,20 @@
+rules_version = '2';
+// À coller dans la console Firebase : Firestore Database → Règles → Publier.
+// Lecture publique du site ; écriture réservée aux comptes Google listés
+// (même liste que ADMIN_EMAILS dans src/firebase.ts).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in ['adrien.enaer@gmail.com', 'myriam.ajabi@gmail.com'];
+    }
+    match /site/data {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

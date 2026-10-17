@@ -1,5 +1,5 @@
 /**
- * Default site data — used as initial values when no localStorage data exists.
+ * Default site data — used as initial values when no Firestore data exists.
  * All content that can be edited via the CMS is defined here.
  */
 
@@ -14,21 +14,25 @@ export interface ArtistProfile {
   stats: { label: string; value: string }[];
   contact: { label: string; value: string }[];
   technique: { label: string; desc: string }[];
+  cvSections: { title: string; items: string[] }[];
+  galleryImages: string[];
 }
 
 export interface Artwork {
   id: string;
   title: string;
-  year: number;
+  year?: number; // facultatif : année inconnue pour certaines fresques
   technique: string;
   dimensions: string;
   description: string;
   images: string[];
-  category: 'toile' | 'fresque' | 'graphisme' | 'serigraphie' | 'objets';
+  category: 'toile' | 'papier' | 'fresque' | 'graphisme' | 'serigraphie' | 'objets';
   isFeatured: boolean;
-  price?: string;
+  price?: string; // montant en euros, sans symbole (ex. '2200')
+  signature?: string; // ex. 'Signée au dos'
   status: 'available' | 'sold' | 'exhibition' | 'private';
   exhibition?: string;
+  lieu?: string; // For fresques: location of the mural
 }
 
 export interface NewsPost {
@@ -36,8 +40,10 @@ export interface NewsPost {
   title: string;
   date: string;
   content: string;
-  image?: string;
+  images: string[]; // Multi-image support
   category: 'exhibition' | 'press' | 'event' | 'studio';
+  link?: string; // lien affiché sous le texte (ex. PDF du catalogue)
+  linkLabel?: string;
 }
 
 export interface Exhibition {
@@ -57,9 +63,40 @@ export interface PortfolioItem {
   id: string;
   title: string;
   description: string;
-  image: string;
+  images: string[]; // Multi-image support (was single 'image')
   link?: string;
   category: string;
+}
+
+export interface HomeNavItem {
+  direction: 'up' | 'down' | 'left' | 'right' | 'center' | 'bio';
+  label: string;
+  subtitle: string;
+  route: string;
+  image: string;
+  textColor?: string;
+  bgColor?: string; // Background color behind the image
+  pwaOnly?: boolean; // If true, only visible when installed as PWA
+}
+
+export interface MenuItemConfig {
+  label: string;
+  route: string;
+  textColor?: string;
+}
+
+export interface MenuLineConfig {
+  color: string;
+  thickness: number; // px
+  offsetX: number; // % from left
+  width: number; // % of container width
+}
+
+export interface MenuConfig {
+  items: MenuItemConfig[];
+  lines: MenuLineConfig[]; // One line config between each item (items.length - 1)
+  lineColor: string; // Fallback default
+  lineThickness: number; // Fallback default
 }
 
 export interface ThemeConfig {
@@ -75,202 +112,206 @@ export interface SiteData {
   press: PressItem[];
   portfolio: PortfolioItem[];
   theme: ThemeConfig;
+  homeNav: HomeNavItem[];
+  menuConfig: MenuConfig;
+  contactEmail: string; // Email address for contact form submissions
+  contentVersion?: number; // voir CONTENT_VERSION
 }
 
+/**
+ * Version du contenu par défaut. Une donnée Firestore d'une version plus ancienne est ignorée
+ * (elle contenait le contenu de démonstration) ; l'admin enregistre ensuite la version actuelle.
+ */
+export const CONTENT_VERSION = 2;
+
+const oeuvre = (slug: string) => `/oeuvres/${slug}.webp`;
+const fresque = (slug: string, n: number) => Array.from({ length: n }, (_, i) => `/fresques/${slug}-${i + 1}.webp`);
+
+/** Vignette 900 px des images du site (les images importées depuis l'admin restent telles quelles). */
+export const thumb = (src: string) =>
+  /^\/(oeuvres|fresques|atelier)\/.+\.webp$/.test(src) ? src.replace(/\.webp$/, '-900.webp') : src;
+
+/** « 2200 » → « 2 200 € » ; une valeur qui contient déjà « € » est laissée telle quelle. */
+export const formatPrice = (price: string) => {
+  if (price.includes('€')) return price;
+  const n = Number(price.replace(/\s/g, '').replace(',', '.'));
+  return Number.isFinite(n) ? `${n.toLocaleString('fr-FR')} €` : price;
+};
+
+export const CATALOGUE_PDF = '/catalogue-adrien-da-silva-2026.pdf';
+
+// Œuvres et légendes : catalogue A.D. 2026 d'Adrien. Fresques : son portfolio 2026.
 export const defaultSiteData: SiteData = {
+  contentVersion: CONTENT_VERSION,
   profile: {
     name: 'Adrien Da Silva',
-    tagline: 'Artiste contemporain — Paris',
-    techniqueTitle: 'Peinture matricielle horizontale',
-    birthInfo: 'Artiste peintre — Né en 1992, Lisbonne',
-    heroBanner: '',
+    tagline: 'Artiste peintre et muraliste — Montpellier',
+    techniqueTitle: '',
+    birthInfo: 'Artiste peintre — Né en 1989',
+    heroBanner: '/atelier/adrien-au-travail.webp',
     appIcon: '',
+    // Bio écrite par Adrien (base du site, avril 2026) ; seules les fautes de frappe sont corrigées.
     bio: [
-      'Né en 1992 à Lisbonne, Adrien Da Silva vit et travaille à Paris depuis 2015. Diplômé des Beaux-Arts de Paris (ENSBA) en 2016, il développe dès ses premières années une technique picturale singulière qu\'il nomme la trame matricielle horizontale.',
-      'Son travail se situe à la croisée de l\'art numérique et de la peinture traditionnelle. Chaque toile est construite ligne par ligne, tiret par tiret, avec une patience méticuleuse. Les traits — toujours horizontaux — se terminent par un demi-cercle parfait, donnant à chaque marque une qualité de capsule organique.',
-      'Ses œuvres questionnent la perception et la représentation à l\'ère du pixel, transformant paysages, portraits et natures mortes en compositions vibrantes où la forme émerge de l\'accumulation systématique de marques élémentaires.',
+      'Dans ses compositions, Adrien nous guide pour observer son environnement : aplats de couleurs, trame de lignes et espaces traversés, autant d\'éléments qui nourrissent un foisonnement narratif qui lui est propre.',
+      'L\'artiste alterne entre représentations figuratives et abstraites, une manière de façonner la réalité en la juxtaposant à son imagination. De ses œuvres naissent plusieurs interprétations d\'un même sujet, elles se complètent.',
+      'Il faut regarder son travail sous plusieurs angles pour en saisir l\'ensemble. Les traits se multiplient, évoquant les strates personnelles d\'un individu : son histoire et ses pensées.',
+      'Tandis que les proportions se développent au rythme de son geste, il entre dans notre intimité et synthétise l\'idée de départ.',
     ],
-    stats: [
-      { label: 'Œuvres', value: '50+' },
-      { label: 'Expositions', value: '12' },
-      { label: 'Murales', value: '8' },
-    ],
+    stats: [],
     contact: [
-      { label: 'Atelier', value: 'Paris, France' },
-      { label: 'Email', value: 'contact@adriendasilva.com' },
-      { label: 'Instagram', value: '@adriendasilva' },
-      { label: 'Site', value: 'www.adriendasilva.com' },
+      { label: 'Atelier', value: 'Montpellier' },
+      { label: 'Email', value: 'adrien.enaer@gmail.com' },
+      { label: 'Instagram', value: '@adrien_dasilva' },
     ],
-    technique: [
-      { label: 'Matrice', desc: 'Lignes horizontales de tirets épais à densité variable' },
-      { label: 'Forme', desc: 'Extrémités en demi-cercle parfait — forme capsule' },
-      { label: 'Luminosité', desc: 'Densité et épaisseur varient selon la valeur tonale' },
-      { label: 'Palette', desc: 'Aubergine profond, rose magenta, noir & blanc' },
-      { label: 'Supports', desc: 'Acrylique sur toile, encre sur papier, mural' },
+    technique: [],
+    cvSections: [
+      { title: '2025', items: [
+        'Assistant de Nelio & Rero — fresque, Montpellier',
+        'Assistant d\'Adec — fresque, Réchicourt-le-Château',
+        'Exposition collective — Aérochrome, Blagnac',
+        'Fresque — Festival K-Live, Sète',
+        'Exposition collective — Galerie Cilas',
+        'Fresque — Festival Plein Champs, Le Mans',
+        'Salon d\'art — Montpellier',
+      ] },
+      { title: '2024', items: [
+        'Fresque Enedis — Pérols',
+        'Fresque Fenêtre sur Rue — L\'Écluse, Paris',
+        'Fresque Plein Sud — Carnon',
+        'Fresque intérieure — CHU, Montpellier',
+        'Exposition personnelle « Temps libre » — St Ravy, Montpellier',
+        'Lauréat de l\'appel à projets d\'art public — fresque, Médiathèque de Graulhet',
+        'Assistant d\'Olivier Kenneybrew — fresque, Montpellier',
+        'Fresque et atelier — Colors Up, CROUS, Montpellier',
+      ] },
+      { title: '2023', items: [
+        'Fresque — Galerie Éphémère, Villeneuve',
+        'Fresque intérieure — Résidence 56, Montpellier',
+        'Exposition personnelle « Plein Sud » — Château de Melgueil, Mauguio',
+        'Fresque — Festival Street Art, Sérignan',
+        'Exposition collective — Galerie Urban Signature, Paris',
+        'Assistant de Fred Battle — fresque, Lunel',
+      ] },
+      { title: '2022', items: [
+        'Galerie Éphémère — installation, Villeneuve-lès-Maguelone',
+        'Fresque — Office de tourisme, Montpellier',
+        'Assistant de Franck Noto — Pont Vezinhet, Montpellier',
+        'Fresque Plein Sud — St Rock Social Club, Montpellier',
+      ] },
+      { title: '2021', items: [
+        'Exposition collective — Urban Signature, Paris',
+        'Fresque — Festival Fenêtre sur Rue, Paris',
+        'Fresque — Festival K-Live, Sète',
+        'Exposition collective — Humble Galerie, Île de Ré',
+        'Fresque — échange artistique ASARUE, Rennes',
+        'Fresque — Le M.U.R, Pérols',
+      ] },
+      { title: '2020', items: [
+        'Exposition « Stéréovision », en collaboration avec Mara — Le Cabinet d\'Amateur, Paris',
+        'Assistant de Hien — Médiathèque, Montpellier',
+        'Exposition collective — La Serre, Montpellier',
+        'Assistant de Zest — K-LIVE, Sète',
+        'Exposition collective « X Y Z » — Pierre Vive, Montpellier',
+      ] },
     ],
+    galleryImages: [],
   },
   artworks: [
-    {
-      id: '1',
-      title: 'Sunset Reflections',
-      year: 2024,
-      technique: 'Acrylic on canvas — Horizontal line matrix',
-      dimensions: '150 × 120 cm',
-      description: 'A mesmerizing landscape depicting a sunset over water, rendered through Da Silva\'s signature horizontal dash technique.',
-      images: [],
-      category: 'toile',
-      isFeatured: true,
-      status: 'exhibition',
-      exhibition: 'Galerie Perrotin, Paris',
-    },
-    {
-      id: '2',
-      title: 'Portrait — Coco',
-      year: 2023,
-      technique: 'Acrylic on canvas — Dot matrix portrait',
-      dimensions: '200 × 180 cm',
-      description: 'A striking portrait composed entirely of horizontal dots and dashes of varying density.',
-      images: [],
-      category: 'fresque',
-      isFeatured: true,
-      status: 'sold',
-    },
-    {
-      id: '3',
-      title: 'Bouquet Violet',
-      year: 2024,
-      technique: 'Acrylic on canvas — Line scan',
-      dimensions: '100 × 80 cm',
-      description: 'A delicate still life of flowers, deconstructed through vertical and horizontal scanning lines.',
-      images: [],
-      category: 'toile',
-      isFeatured: true,
-      status: 'available',
-      price: '€12,000',
-    },
-    {
-      id: '4',
-      title: 'Seascape — Dawn',
-      year: 2023,
-      technique: 'Acrylic on canvas — Horizontal stripe',
-      dimensions: '120 × 90 cm',
-      description: 'A coastal scene at dawn, where the sea and sky merge through horizontal bands of varying width.',
-      images: [],
-      category: 'toile',
-      isFeatured: false,
-      status: 'available',
-      price: '€8,500',
-    },
-    {
-      id: '5',
-      title: 'Mural — Place de la République',
-      year: 2024,
-      technique: 'Exterior mural — Mixed media',
-      dimensions: '8m × 5m',
-      description: 'A monumental public mural commissioned by the City of Paris.',
-      images: [],
-      category: 'fresque',
-      isFeatured: true,
-      status: 'private',
-    },
-    {
-      id: '6',
-      title: 'Série Noire #03',
-      year: 2022,
-      technique: 'India ink on paper — Line matrix',
-      dimensions: '60 × 40 cm',
-      description: 'Part of the minimalist Série Noire collection, stripping the technique to its essence.',
-      images: [],
-      category: 'serigraphie',
-      isFeatured: false,
-      status: 'sold',
-    },
-    {
-      id: '7',
-      title: 'Flamingo Dreams',
-      year: 2024,
-      technique: 'Acrylic on canvas — Gradient matrix',
-      dimensions: '130 × 100 cm',
-      description: 'A tropical scene rendered with an expanded palette of hot pinks, corals, and deep navy.',
-      images: [],
-      category: 'toile',
-      isFeatured: false,
-      status: 'available',
-      price: '€10,000',
-    },
-    {
-      id: '8',
-      title: 'Urban Decay #12',
-      year: 2023,
-      technique: 'Acrylic and spray on canvas',
-      dimensions: '180 × 140 cm',
-      description: 'An exploration of urban textures and deterioration, combining matrix technique with spray paint.',
-      images: [],
-      category: 'graphisme',
-      isFeatured: false,
-      status: 'exhibition',
-      exhibition: 'Art Basel Miami, 2023',
-    },
+    // ── Catalogue 2026 (dans l'ordre du catalogue) ──
+    { id: 'on-dirait-le-sud-116-x-89', title: 'On dirait le sud', year: 2026, technique: 'Acrylique sur toile', dimensions: '116 x 89 cm', signature: 'Signée au dos', price: '2200', description: '', images: [oeuvre('on-dirait-le-sud-116-x-89')], category: 'toile', isFeatured: true, status: 'available' },
+    { id: 'on-dirait-le-sud-146-x-97', title: 'On dirait le sud', year: 2026, technique: 'Acrylique sur toile', dimensions: '146 x 97 cm', signature: 'Signée au dos', price: '3000', description: '', images: [oeuvre('on-dirait-le-sud-146-x-97')], category: 'toile', isFeatured: true, status: 'available' },
+    { id: 'deconnecte', title: 'Déconnecté', year: 2024, technique: 'Acrylique sur toile', dimensions: '150 x 150 cm', signature: 'Signée au dos', price: '4600', description: 'La composition saisit un flux de travailleurs pris dans la mécanique du quotidien. Les silhouettes avancent, chargées de leurs obligations, tandis que l\'horizon appelle ailleurs. En creux, la ville retient ceux qui ne rêvent que de temps libre au bord de la mer.', images: [oeuvre('deconnecte')], category: 'toile', isFeatured: true, status: 'available' },
+    { id: 'temps-libre-3', title: 'Temps libre 3', year: 2024, technique: 'Acrylique sur toile', dimensions: '130 x 97 cm', signature: 'Signée au dos', price: '2700', description: '', images: [oeuvre('temps-libre-3')], category: 'toile', isFeatured: false, status: 'available' },
+    { id: 'vita-lenta', title: 'Vita lenta', year: 2025, technique: 'Acrylique sur toile', dimensions: '100 x 70 cm', signature: 'Signée au dos', price: '1600', description: '', images: [oeuvre('vita-lenta')], category: 'toile', isFeatured: false, status: 'available' },
+    { id: 'monotype-serie', title: 'Monotype série', year: 2025, technique: 'Collage sur toile', dimensions: '25 x 20 cm', signature: 'Signée au dos', price: '220', description: '', images: [oeuvre('monotype-serie')], category: 'toile', isFeatured: false, status: 'available' },
+    { id: 'hors-ligne-1-0', title: 'Hors ligne 1.0', year: 2024, technique: 'Acrylique sur toile', dimensions: '130 x 97 cm', signature: 'Signée au dos', price: '2700', description: '', images: [oeuvre('hors-ligne-1-0')], category: 'toile', isFeatured: false, status: 'available' },
+    { id: 'serigraphie-temps-libre', title: 'Sérigraphie Temps libre', year: 2025, technique: 'Sérigraphie, 6 passages couleurs', dimensions: '70 x 50 cm', signature: 'Signée et numérotée', price: '150', description: '', images: [oeuvre('serigraphie-temps-libre')], category: 'serigraphie', isFeatured: false, status: 'available' },
+    { id: 'hors-lignes-5', title: 'Hors lignes 5', year: 2024, technique: 'Acrylique sur papier', dimensions: '100 x 70 cm', signature: 'Signée au devant', price: '1600', description: '', images: [oeuvre('hors-lignes-5')], category: 'papier', isFeatured: false, status: 'available' },
+    { id: 'hors-ligne-1', title: 'Hors ligne 1', year: 2024, technique: 'Acrylique sur papier teinté', dimensions: '70 x 50 cm', signature: 'Signée au devant', price: '950', description: '', images: [oeuvre('hors-ligne-1')], category: 'papier', isFeatured: false, status: 'available' },
+    { id: 'hors-ligne-2', title: 'Hors ligne 2', year: 2024, technique: 'Acrylique sur papier teinté', dimensions: '70 x 50 cm', signature: 'Signée au devant', price: '950', description: '', images: [oeuvre('hors-ligne-2')], category: 'papier', isFeatured: false, status: 'available' },
+    { id: 'temps-libre-1-618', title: 'Temps libre 1.618', year: 2024, technique: 'Acrylique sur toile', dimensions: '150 x 100 cm', signature: 'Signée au dos', price: '3000', description: 'Composition en rectangle d\'or : paysage, nature, végétation. Le travail sur la trame et les lignes horizontales joue avec la perception de l\'espace et du volume. Cette composition graphique se lit de façon vibrante, entre abstraction et figuration.', images: [oeuvre('temps-libre-1-618')], category: 'toile', isFeatured: false, status: 'available' },
+    { id: 'hors-lignes-3', title: 'Hors lignes 3', year: 2024, technique: 'Acrylique et crayon sur papier', dimensions: '40 x 35 cm', signature: 'Signée au dos', price: '450', description: '', images: [oeuvre('hors-lignes-3')], category: 'papier', isFeatured: false, status: 'available' },
+    { id: 'temps-libre-voile', title: 'Temps libre voile', year: 2024, technique: 'Acrylique sur toile', dimensions: '70 x 50 cm', signature: 'Signée au dos', price: '950', description: '', images: [oeuvre('temps-libre-voile')], category: 'toile', isFeatured: false, status: 'available' },
+    { id: 'hors-lignes-1-0', title: 'Hors lignes 1.0', year: 2022, technique: 'Acrylique et crayon sur papier', dimensions: '70 x 50 cm', signature: 'Signée au devant', price: '950', description: '', images: [oeuvre('hors-lignes-1-0')], category: 'papier', isFeatured: false, status: 'available' },
+    { id: 'temps-libre-2-0', title: 'Temps libre 2.0', year: 2024, technique: 'Acrylique sur toile', dimensions: '130 x 97 cm', signature: 'Signée au dos', price: '2700', description: '', images: [oeuvre('temps-libre-2-0')], category: 'toile', isFeatured: false, status: 'available' },
+    { id: 'le-temps-libre', title: 'Le temps libre', year: 2024, technique: 'Acrylique sur toile', dimensions: '196 x 146 cm', signature: 'Signée au dos', price: '5200', description: 'Cette composition explore la densité des flux et des trajectoires quotidiennes dans les lieux de rencontre. Le trait souligne le rythme des passants dans un présent en mouvement et saisit la vitalité des échanges au cœur du tissu urbain.', images: [oeuvre('le-temps-libre')], category: 'toile', isFeatured: true, status: 'available' },
+    { id: 'lignes-de-vies-2', title: 'Lignes de vies 2', year: 2025, technique: 'Acrylique sur toile', dimensions: '100 x 81 cm', signature: 'Signée au dos', price: '1800', description: 'Lignes de vie est une série de toiles représentant des éléments essentiels pour l\'artiste, comme la maison, l\'atelier ou l\'amour.', images: [oeuvre('lignes-de-vies-2')], category: 'toile', isFeatured: false, status: 'available' },
+    // Pastille rouge dans le catalogue d'Adrien : vendue.
+    { id: 'lignes-de-vies', title: 'Lignes de vies', year: 2025, technique: 'Acrylique sur toile', dimensions: '100 x 100 cm', signature: 'Signée au dos', price: '2000', description: 'Lignes de vie est une série de toiles représentant des éléments essentiels pour l\'artiste, comme la maison, l\'atelier ou l\'amour.', images: [oeuvre('lignes-de-vies')], category: 'toile', isFeatured: false, status: 'sold' },
+
+    // ── Fresques (portfolio 2026) ──
+    { id: 'plein-sud-saint-roch', title: 'Plein Sud — Saint Roch Social Club', year: 2022, technique: 'Fresque', dimensions: '1000 m²', lieu: 'Montpellier', description: 'Parasols, corps en mouvement, panorama figuratif et abstrait : l\'artiste joue sur les dimensions, les points de vue et les couleurs. Les traits se multiplient et l\'œil se pose naturellement sur les tons vifs et les contours vibrants. Cette fresque monumentale traite de l\'effervescence des lieux de passage et place la figure humaine au cœur d\'un récit abstrait, entièrement composé par la couleur.', images: fresque('plein-sud-saint-roch', 3), category: 'fresque', isFeatured: true, status: 'private' },
+    { id: 'granholat', title: 'Granholat', year: 2024, technique: 'Fresque', dimensions: '18 x 13 m', lieu: 'Médiathèque de Graulhet', description: 'Lauréat de l\'appel à projets de fresque pour la médiathèque de Graulhet, porté par l\'agglomération Gaillac Graulhet, l\'association Cisart et l\'association LineUp. Le récit s\'ancre dans l\'histoire de Graulhet, ancienne capitale du cuir née autour de sa rivière. La superposition des échelles révèle la magie fondatrice de ce cours d\'eau, à l\'origine de l\'activité et des usages quotidiens.', images: fresque('granholat', 2), category: 'fresque', isFeatured: true, status: 'private' },
+    { id: 'raconte-moi-carnon', title: 'Raconte-moi Carnon', technique: 'Fresque', dimensions: '18 x 11 m', lieu: 'Carnon, Mauguio', description: 'Projet culturel de la ville de Mauguio Carnon, fresque réalisée avec l\'association LineUp. Un visuel qui raconte l\'identité de Carnon par ses signes familiers : horizons, cabanes de pêcheurs, scènes de plage et mouvements de bateaux composent une mise en abyme du temps libre à Carnon.', images: fresque('raconte-moi-carnon', 1), category: 'fresque', isFeatured: true, status: 'private' },
+    { id: 'stereovision', title: 'Stéréovision', technique: 'Fresque', dimensions: '12 x 10 m', lieu: 'Bayonne', description: 'Festival d\'arts urbains Point de vue, ville de Bayonne. Cette œuvre incarne la jeunesse de Bayonne dans une composition originale qui mêle plusieurs plans, des échelles variées et différentes techniques. Les couleurs ont été choisies en lien avec le sport local.', images: fresque('stereovision', 1), category: 'fresque', isFeatured: false, status: 'private' },
+    { id: 'colorsup', title: 'ColorsUp', year: 2024, technique: 'Fresque', dimensions: '', lieu: 'Restaurant universitaire Richter, Montpellier', description: 'Projet du Crous réalisé au restaurant universitaire Richter, avec la participation d\'étudiants : portrait et volume. Conçu avec eux, ce portrait s\'intègre naturellement au lieu et devient un point d\'identification pour les jeunes qui y vivent.', images: fresque('colorsup', 2), category: 'fresque', isFeatured: false, status: 'private' },
+    { id: 'parisienne', title: 'Parisienne', technique: 'Fresque', dimensions: '50 m²', lieu: 'Pantin', description: 'Programme de renouvellement urbain de la ville de Pantin, fresque réalisée avec l\'association L\'Écluse. Le portrait en gros plan d\'une femme au chapeau, le regard tourné vers l\'avenir, parmi les monuments et l\'architecture de Pantin. Pensée pour durer, sa présence accompagne les habitants d\'un quartier en pleine transformation.', images: fresque('parisienne', 1), category: 'fresque', isFeatured: false, status: 'private' },
+    { id: 'plein-sud-2', title: 'Plein Sud 2', year: 2023, technique: 'Fresque', dimensions: '4 x 20 m', lieu: 'Sérignan', description: 'Festival street art de la ville de Sérignan. Le format horizontal, pensé comme une bande dessinée, déroule un récit en séquences qui accompagne la promenade le long de l\'Orb. Abstraction et figuration s\'y mêlent dans des couleurs fluo qui évoquent la saturation des plages.', images: fresque('plein-sud-2', 1), category: 'fresque', isFeatured: false, status: 'private' },
+    { id: 'cocktail', title: 'Cocktail', year: 2021, technique: 'Fresque', dimensions: '8 x 4 m', lieu: 'Rennes', description: 'Échange artistique avec les offices de tourisme de Montpellier et de Rennes. Une composition géométrique qui met en scène une figure tournée vers l\'horizon. L\'image évoque les plaisirs simples : un cocktail au bord de la mer, allongé sur le sable.', images: fresque('cocktail', 2), category: 'fresque', isFeatured: false, status: 'private' },
+    { id: '34-degres', title: '34 degrés', year: 2021, technique: 'Fresque', dimensions: '43 x 3 m', lieu: 'Le Mur de Pérols', description: 'Installé le long de la route du littoral, ce panoramique de 43 mètres se lit d\'un coup d\'œil. Il offre un échantillon de la destination à travers une suite d\'objets emblématiques.', images: fresque('34-degres', 1), category: 'fresque', isFeatured: false, status: 'private' },
+    { id: 'etang-de-l-or', title: 'Étang de l\'or', year: 2024, technique: 'Fresque', dimensions: '20 m²', lieu: 'Pérols', description: 'Réhabilitation d\'un transformateur électrique Enedis pour la ville de Pérols. L\'intervention montre comment des structures techniques deviennent des signaux visuels poétiques. L\'eau est au cœur du projet, par ses couleurs comme par sa représentation, comme une promenade au bord de l\'étang.', images: fresque('etang-de-l-or', 2), category: 'fresque', isFeatured: false, status: 'private' },
   ],
   news: [
     {
-      id: '1',
-      title: 'Solo Exhibition at Galerie Perrotin',
-      date: '2024-03-15',
-      content: 'Thrilled to announce my upcoming solo exhibition "Between the Lines" at Galerie Perrotin, Paris. Opening reception on March 28th.',
-      category: 'exhibition',
-    },
-    {
-      id: '2',
-      title: 'Featured in Art Forum Magazine',
-      date: '2024-02-20',
-      content: 'Honored to be featured in the February issue of Art Forum, with a deep dive into my line matrix technique.',
-      category: 'press',
-    },
-    {
-      id: '3',
-      title: 'New Mural Commission — Lyon',
-      date: '2024-01-10',
-      content: 'Excited to share that I\'ve been commissioned to create a monumental mural in Lyon\'s Confluence district.',
-      category: 'event',
-    },
-    {
-      id: '4',
-      title: 'Studio Visit — New Series in Progress',
-      date: '2023-12-05',
-      content: 'Currently in the studio working on a new series. Experimenting with metallic inks and UV-reactive pigments.',
+      id: 'catalogue-2026',
+      title: 'Le catalogue 2026 est en ligne',
+      date: '2026-10-17',
+      content: 'Dix-neuf œuvres réunies dans un nouveau catalogue : les toiles « On dirait le sud » peintes cette année, les séries « Temps libre », « Hors ligne » et « Lignes de vies », des travaux sur papier, une sérigraphie six couleurs et une série de monotypes. Chaque œuvre est présentée seule, avec sa technique, son format et son prix. Toutes sont à voir dans la page Catalogue ; pour une acquisition ou une question, la page Contact est ouverte.',
+      images: ['/oeuvres/couverture-catalogue-2026.webp', oeuvre('on-dirait-le-sud-146-x-97'), oeuvre('on-dirait-le-sud-116-x-89')],
       category: 'studio',
+      link: CATALOGUE_PDF,
+      linkLabel: 'Télécharger le catalogue (PDF)',
     },
     {
-      id: '5',
-      title: 'Art Basel Miami — Recap',
-      date: '2023-11-28',
-      content: 'What an incredible week at Art Basel Miami! Three works found new homes during the fair.',
+      id: 'civilisation',
+      title: 'Civilisation — Galerie Cilas',
+      date: '2026',
+      content: 'Avec Civilisation, la Galerie Cilas réunit quatre artistes montpelliérains, Mara, Adrien Da Silva, Julien Barriol et Salamech, autour d\'une réflexion commune sur nos codes, nos traces et nos héritages contemporains.',
+      images: [],
+      category: 'exhibition',
+    },
+    {
+      id: 'temps-libre',
+      title: 'Temps libre',
+      date: '2025',
+      content: 'Il y a comme un vent de fraîcheur qui souffle dans l\'atelier d\'Adrien Da Silva dernièrement. Les couleurs sont douces, la toile de lin brut recouverte d\'une fine couche de peinture blanche laisse entrevoir la matière çà et là, les compositions sont joyeuses et sereines : on peut presque entendre le bruit de la foule de badauds déambulant dans les allées d\'un marché, un dimanche matin d\'été. Une image que nous avons tous bien en tête : la flânerie d\'une balade en ville, les divagations de l\'esprit lorsque, installés à la terrasse d\'un café, nous nous prenons à rêvasser…\n\nCe sont ces instants-là que l\'artiste a choisi de décrire, sans trop d\'artifices. Ce temps libre si précieux et si crucial, quelle que soit sa forme. Il nous déconnecte d\'un train-train bien huilé qui s\'apparente parfois plus à un sprint sans fin qu\'à une course de fond. Comme une respiration, il a cette faculté de nous soulager et de nous recharger dans le même temps.\n\nCe temps libre, l\'artiste se plaît à le représenter depuis quelques années déjà, sans toutefois verbaliser le pourquoi de cette intention, alors qu\'elle réside simplement dans le désir de montrer la beauté, la simplicité et l\'authenticité de ces moments, d\'offrir une pause contemplative et de revenir à une forme de réalité plus terre-à-terre et ancrée dans l\'instant présent. Il observe puis capture des images mentales pour en livrer une interprétation personnelle, comme s\'il cherchait à immortaliser ces moments pour toujours en les fixant sur la toile. Jour après jour, il passe son temps à peindre le temps libre des autres, sorte de mise en abîme involontaire mais néanmoins captivante.\n\nSe laisser la liberté de s\'arrêter et de contempler. Pour lui, la vérité de l\'humain se loge là.',
+      images: [oeuvre('le-temps-libre'), oeuvre('temps-libre-3'), oeuvre('temps-libre-2-0')],
       category: 'exhibition',
     },
   ],
-  exhibitions: [
-    { year: '2024', title: 'Between the Lines', venue: 'Galerie Perrotin, Paris', type: 'Solo' },
-    { year: '2024', title: 'Mural — Place de la République', venue: 'Commande publique, Paris', type: 'Public' },
-    { year: '2023', title: 'Art Basel Miami Beach', venue: 'Miami Beach Convention Center', type: 'Foire' },
-    { year: '2023', title: 'Lignes de Fuite', venue: 'Centre Pompidou, Paris', type: 'Collectif' },
-    { year: '2023', title: 'New Horizons', venue: 'White Cube, London', type: 'Collectif' },
-    { year: '2022', title: 'Série Noire', venue: 'Galerie Thaddaeus Ropac, Paris', type: 'Solo' },
-    { year: '2022', title: 'FIAC', venue: 'Grand Palais Éphémère, Paris', type: 'Foire' },
-    { year: '2021', title: 'Pixel & Pigment', venue: 'Palais de Tokyo, Paris', type: 'Collectif' },
-  ],
-  press: [
-    { title: 'Art Forum', excerpt: '"Da Silva\'s line matrix technique reinvents the relationship between digital and analog..."', link: '' },
-    { title: 'Beaux Arts Magazine', excerpt: '"Une approche radicalement nouvelle du portrait, entre pixelisation et peinture classique."', link: '' },
-    { title: 'Le Monde', excerpt: '"L\'artiste qui peint au tiret : Adrien Da Silva transforme le regard."', link: '' },
-  ],
-  portfolio: [
-    { id: '1', title: 'Brand Identity — Maison Lumière', description: 'Direction artistique complète pour une maison de luxe parisienne.', image: '', link: '', category: 'Direction artistique' },
-    { id: '2', title: 'Fresque — Hôtel Le Marais', description: 'Fresque murale de 12m pour le lobby de l\'hôtel.', image: '', link: '', category: 'Mural' },
-    { id: '3', title: 'Collaboration — Nike', description: 'Collection capsule avec application du motif matriciel sur textile.', image: '', link: '', category: 'Collaboration' },
-  ],
+  exhibitions: [],
+  press: [],
+  portfolio: [],
   theme: {
     bgColor: '#0a0a0a',
     paletteId: 'warm',
   },
+  homeNav: [
+    { direction: 'bio', label: 'Adrien Da Silva', subtitle: 'Artiste peintre et muraliste — Montpellier', route: '/profile', image: '/atelier/adrien-au-travail.webp', textColor: '#f2ede8' },
+    { direction: 'up', label: 'Catalogue', subtitle: 'Œuvres 2026', route: '/catalogue', image: oeuvre('on-dirait-le-sud-146-x-97'), textColor: '#f2ede8' },
+    { direction: 'right', label: 'Fresques', subtitle: 'Œuvres murales', route: '/fresques', image: '/fresques/granholat-1.webp', textColor: '#f2ede8' },
+    { direction: 'center', label: 'Journal', subtitle: 'Actualités', route: '/journal', image: '/oeuvres/couverture-catalogue-2026.webp', textColor: '#f2ede8' },
+    { direction: 'center', label: 'Filtre', subtitle: 'Votre photo en lignes', route: '/filter', image: '/oeuvres/hors-ligne-2.webp', textColor: '#f2ede8' },
+    { direction: 'down', label: 'Contact', subtitle: 'Écrire à l\'artiste', route: '/contact', image: '/fresques/raconte-moi-carnon-1.webp', textColor: '#f2ede8' },
+  ],
+  menuConfig: {
+    items: [
+      { label: 'Accueil', route: '/', textColor: '#f2ede8' },
+      { label: 'Catalogue', route: '/catalogue', textColor: '#f2ede8' },
+      { label: 'Fresques', route: '/fresques', textColor: '#f2ede8' },
+      { label: 'Journal', route: '/journal', textColor: '#f2ede8' },
+      { label: 'Filtre', route: '/filter', textColor: '#f2ede8' },
+      { label: 'Contact', route: '/contact', textColor: '#f2ede8' },
+    ],
+    lineColor: '#c9a090',
+    lineThickness: 4,
+    lines: [
+      { color: '#c9a090', thickness: 4, offsetX: 10, width: 35 },
+      { color: '#c9a090', thickness: 4, offsetX: 45, width: 30 },
+      { color: '#c9a090', thickness: 4, offsetX: 15, width: 40 },
+      { color: '#c9a090', thickness: 4, offsetX: 50, width: 25 },
+      { color: '#c9a090', thickness: 4, offsetX: 20, width: 35 },
+    ],
+  },
+  contactEmail: 'adrien.enaer@gmail.com',
 };

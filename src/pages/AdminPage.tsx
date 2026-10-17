@@ -1,22 +1,46 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider, type User } from 'firebase/auth';
+import { auth, ADMIN_EMAILS } from '../firebase';
 import { useSiteData } from '../contexts/SiteDataContext';
-import { Save, Plus, Trash2, Download, Upload, RotateCcw, ChevronDown, ChevronRight, Bell, Send } from 'lucide-react';
+import { Save, Plus, Trash2, Download, Upload, RotateCcw, ChevronDown, ChevronUp, ChevronRight, Bell, Send, Loader2 } from 'lucide-react';
 import type { Artwork, NewsPost, PortfolioItem } from '../data/defaultData';
 import { TEXT_PALETTES } from '../App';
+import MultiImageUpload from '../components/MultiImageUpload';
 
-type Section = 'profile' | 'artworks' | 'news' | 'exhibitions' | 'press' | 'portfolio' | 'notifications' | 'theme' | 'tools';
+type Section = 'home' | 'profile' | 'artworks' | 'fresques' | 'news' | 'portfolio' | 'menu' | 'notifications' | 'theme' | 'tools';
 
 export default function AdminPage() {
   const {
-    data, updateProfile,
+    data, uploadImage, updateProfile,
     addArtwork, updateArtwork, deleteArtwork,
     addNews, updateNews, deleteNews,
-    addExhibition, deleteExhibition,
+    setExhibitions, addExhibition, deleteExhibition,
     addPress, updatePress, deletePress,
     addPortfolio, updatePortfolio, deletePortfolio,
     updateTheme,
+    updateHomeNav,
+    reorderHomeNav,
+    updateMenuConfig,
+    updateContactEmail,
     exportData, importData, resetData,
+    save, hasUnsaved, saving,
   } = useSiteData();
+
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [editingTile, setEditingTile] = useState<string | null>(null);
+
+  const handleImageUpload = useCallback(async (file: File, folder: string, onUrl: (url: string) => void) => {
+    setUploading(folder);
+    try {
+      const url = await uploadImage(file, folder);
+      onUrl(url);
+    } catch (err) {
+      console.error('Upload failed:', err);
+      alert(`La photo n'a pas pu être envoyée : ${err instanceof Error ? err.message : 'erreur inconnue'}`);
+    } finally {
+      setUploading(null);
+    }
+  }, [uploadImage]);
 
   const [activeSection, setActiveSection] = useState<Section>('profile');
   const [editingArtwork, setEditingArtwork] = useState<string | null>(null);
@@ -24,13 +48,16 @@ export default function AdminPage() {
   const [editingPortfolio, setEditingPortfolio] = useState<string | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
 
+  const fresquesCount = data.artworks.filter(a => a.category === 'fresque').length;
+  const storeCount = data.artworks.filter(a => a.category !== 'fresque').length;
   const sections: { id: Section; label: string; count?: number }[] = [
+    { id: 'home', label: 'Accueil' },
     { id: 'profile', label: 'Profil' },
-    { id: 'artworks', label: 'Catalogue', count: data.artworks.length },
+    { id: 'artworks', label: 'Store', count: storeCount },
+    { id: 'fresques', label: 'Fresques', count: fresquesCount },
     { id: 'news', label: 'Journal', count: data.news.length },
-    { id: 'exhibitions', label: 'Expositions', count: data.exhibitions.length },
-    { id: 'press', label: 'Presse', count: data.press.length },
-    { id: 'portfolio', label: 'Portfolio', count: (data.portfolio || []).length },
+    { id: 'portfolio', label: 'Atelier', count: (data.portfolio || []).length },
+    { id: 'menu', label: 'Menu' },
     { id: 'notifications', label: 'Notifs' },
     { id: 'theme', label: 'Thème' },
     { id: 'tools', label: 'Outils' },
@@ -84,59 +111,56 @@ export default function AdminPage() {
       title: 'Nouvelle actualité',
       date: new Date().toISOString().slice(0, 10),
       content: '',
+      images: [],
       category: 'event',
     };
     addNews(post);
     setEditingNews(id);
   };
 
-  // ── Password gate ──
-  const ADMIN_PASSWORD = 'BabyLove';
-  const [isAuthenticated, setIsAuthenticated] = useState(() =>
-    sessionStorage.getItem('admin-auth') === 'true'
-  );
-  const [passwordInput, setPasswordInput] = useState('');
-  const [passwordError, setPasswordError] = useState(false);
+  // ── Accès : compte Google autorisé (les règles Firestore vérifient la même liste) ──
+  const [user, setUser] = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [authError, setAuthError] = useState('');
+  useEffect(() => onAuthStateChanged(auth, u => { setUser(u); setAuthReady(true); }), []);
+  const isAdmin = !!user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passwordInput === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('admin-auth', 'true');
-    } else {
-      setPasswordError(true);
-      setTimeout(() => setPasswordError(false), 1500);
+  const handleLogin = async () => {
+    setAuthError('');
+    try {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+    } catch {
+      setAuthError('Connexion impossible. Réessayez.');
     }
   };
 
-  if (!isAuthenticated) {
+  if (!authReady) {
+    return <div className="page-loader"><div className="page-loader-bar" /></div>;
+  }
+
+  if (!isAdmin) {
     return (
       <div className="page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-        <form onSubmit={handleLogin} style={{ textAlign: 'center', width: '280px' }}>
+        <div style={{ textAlign: 'center', width: '300px' }}>
           <h1 style={{ fontSize: '1.8rem', marginBottom: '8px' }}>Admin</h1>
           <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '24px' }}>
-            Entrez le mot de passe pour accéder au panneau d'administration.
+            {user
+              ? `Le compte ${user.email} n'a pas accès à l'administration.`
+              : 'Connectez-vous avec le compte Google autorisé.'}
           </p>
-          <input
-            type="password"
-            className="admin-input"
-            placeholder="Mot de passe"
-            value={passwordInput}
-            onChange={e => { setPasswordInput(e.target.value); setPasswordError(false); }}
-            style={{
-              textAlign: 'center',
-              marginBottom: '12px',
-              borderColor: passwordError ? '#e53e3e' : undefined,
-            }}
-            autoFocus
-          />
-          {passwordError && (
-            <p style={{ fontSize: '0.7rem', color: '#e53e3e', marginBottom: '8px' }}>Mot de passe incorrect</p>
+          {authError && (
+            <p style={{ fontSize: '0.7rem', color: '#e53e3e', marginBottom: '8px' }}>{authError}</p>
           )}
-          <button type="submit" className="btn btn-primary btn-block">
-            Connexion
-          </button>
-        </form>
+          {user ? (
+            <button type="button" className="btn btn-outline btn-block" onClick={() => signOut(auth)}>
+              Changer de compte
+            </button>
+          ) : (
+            <button type="button" className="btn btn-primary btn-block" onClick={handleLogin}>
+              Se connecter avec Google
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -173,8 +197,188 @@ export default function AdminPage() {
         ))}
       </div>
 
+        {/* ── Floating Save Bar ── */}
+        {hasUnsaved && (
+          <div style={{
+            position: 'sticky', top: '60px', zIndex: 100,
+            padding: '10px 16px',
+            background: 'rgba(10,10,10,0.95)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderBottom: '1px solid rgba(201,160,144,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            gap: '12px',
+          }}>
+            <span style={{ fontSize: '0.72rem', color: 'var(--color-accent)', fontWeight: 500 }}>
+              ● Modifications non sauvegardées
+            </span>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={save}
+              disabled={saving}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                minWidth: '140px', justifyContent: 'center',
+              }}
+            >
+              {saving ? (
+                <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Sauvegarde...</>
+              ) : (
+                <><Save size={14} /> Sauvegarder</>
+              )}
+            </button>
+          </div>
+        )}
+
       <div className="page-content" style={{ padding: '0 16px' }}>
 
+        {/* ════════ HOME NAV — REORDERABLE TILES ════════ */}
+        {activeSection === 'home' && (
+          <div className="admin-section animate-in">
+            <h2 className="admin-section-title">Tiles de l'accueil</h2>
+            <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginBottom: '20px', fontWeight: 300 }}>
+              Gérez l'ordre et l'apparence des slides du carousel. L'ordre ici correspond à l'ordre de navigation sur la home.
+            </p>
+
+            {(data.homeNav || []).map((item, i) => {
+              const isBio = item.direction === 'bio';
+              const isOpen = editingTile === `tile-${i}`;
+              return (
+                <div key={`tile-${i}`} className="admin-card" style={{ padding: '0', marginBottom: '10px', overflow: 'hidden' }}>
+                  {/* Tile header — always visible */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px',
+                    cursor: 'pointer', background: isOpen ? 'rgba(255,255,255,0.02)' : 'transparent',
+                  }} onClick={() => setEditingTile(isOpen ? null : `tile-${i}`)}>
+                    {/* Reorder buttons */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <button disabled={i === 0} onClick={e => { e.stopPropagation(); reorderHomeNav(i, i - 1); }}
+                        style={{ opacity: i === 0 ? 0.15 : 0.5, padding: '2px', lineHeight: 0 }}>
+                        <ChevronUp size={14} />
+                      </button>
+                      <button disabled={i === (data.homeNav || []).length - 1}
+                        onClick={e => { e.stopPropagation(); reorderHomeNav(i, i + 1); }}
+                        style={{ opacity: i === (data.homeNav || []).length - 1 ? 0.15 : 0.5, padding: '2px', lineHeight: 0 }}>
+                        <ChevronDown size={14} />
+                      </button>
+                    </div>
+
+                    {/* Thumbnail */}
+                    <div style={{
+                      width: '44px', height: '44px', flexShrink: 0, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)',
+                      background: 'var(--color-dark-surface)',
+                    }}>
+                      {(item.image || (isBio && data.profile.heroBanner)) && (
+                        <img src={item.image || data.profile.heroBanner} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      )}
+                    </div>
+
+                    {/* Title + badge */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {item.label}
+                        {isBio && <span style={{ fontSize: '0.5rem', background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', padding: '1px 6px', borderRadius: '2px' }}>Bio</span>}
+                      </div>
+                      <div style={{ fontSize: '0.58rem', color: 'var(--color-text-muted)' }}>{item.route}</div>
+                    </div>
+
+                    {/* Color swatch */}
+                    <div style={{
+                      width: '16px', height: '16px', borderRadius: '50%',
+                      border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0,
+                      background: item.textColor || '#f2ede8',
+                    }} />
+
+                    <ChevronRight size={14} style={{
+                      opacity: 0.3, transition: 'transform 0.2s',
+                      transform: isOpen ? 'rotate(90deg)' : 'none',
+                    }} />
+                  </div>
+
+                  {/* Expanded editor */}
+                  {isOpen && (
+                    <div style={{ padding: '0 14px 14px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                      {/* Image */}
+                      <div style={{ marginTop: '12px', marginBottom: '12px' }}>
+                        <label className="admin-label">Image de fond</label>
+                        {(item.image || (isBio && data.profile.heroBanner)) ? (
+                          <div style={{ position: 'relative' }}>
+                            <img src={item.image || (isBio ? data.profile.heroBanner : '')} alt=""
+                              style={{ width: '100%', height: '120px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.06)' }} />
+                            <button onClick={() => {
+                              if (isBio && !item.image) updateProfile({ heroBanner: '' });
+                              else updateHomeNav(i, { image: '' });
+                            }}
+                              style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(0,0,0,0.7)', color: '#fff', border: 'none', padding: '4px 8px', fontSize: '0.65rem', cursor: 'pointer' }}>
+                              <Trash2 size={12} /> Retirer
+                            </button>
+                          </div>
+                        ) : (
+                          <label style={{
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                            height: '80px', border: '1px dashed rgba(255,255,255,0.12)', cursor: 'pointer', fontSize: '0.72rem', color: 'var(--color-text-muted)',
+                          }}>
+                            {uploading === `tile-${i}` ? (
+                              <><Loader2 size={16} style={{ marginBottom: '6px', animation: 'spin 1s linear infinite' }} /> Upload...</>
+                            ) : (
+                              <><Upload size={16} style={{ marginBottom: '6px', opacity: 0.4 }} /> Ajouter une image</>
+                            )}
+                            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              handleImageUpload(file, `homeNav/tile-${i}`, url => updateHomeNav(i, { image: url }));
+                              e.target.value = '';
+                            }} />
+                          </label>
+                        )}
+                      </div>
+
+                      <AdminField label="Titre" value={item.label} onChange={v => updateHomeNav(i, { label: v })} />
+                      <AdminField label="Sous-titre" value={item.subtitle} onChange={v => updateHomeNav(i, { subtitle: v })} />
+                      <AdminField label="Route" value={item.route} onChange={v => updateHomeNav(i, { route: v })} />
+
+                      {/* Text color */}
+                      <div style={{ marginBottom: '10px' }}>
+                        <label className="admin-label">Couleur du texte</label>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <input type="color" value={item.textColor || '#f2ede8'}
+                            onChange={e => updateHomeNav(i, { textColor: e.target.value })}
+                            style={{ width: '32px', height: '32px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', cursor: 'pointer', padding: 0 }} />
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                            {['#f2ede8', '#ffffff', '#000000', '#c9a090', '#a0c9b0', '#90a0c9'].map(c => (
+                              <button key={c} onClick={() => updateHomeNav(i, { textColor: c })}
+                                style={{
+                                  width: '20px', height: '20px', borderRadius: '50%', background: c, border: item.textColor === c ? '2px solid var(--color-accent)' : '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', padding: 0,
+                                }} />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Background color */}
+                      <div style={{ marginBottom: '10px' }}>
+                        <label className="admin-label">Couleur de fond</label>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <input type="color" value={item.bgColor || '#0a0a0a'}
+                            onChange={e => updateHomeNav(i, { bgColor: e.target.value })}
+                            style={{ width: '32px', height: '32px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', cursor: 'pointer', padding: 0 }} />
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                            {['#0a0a0a', '#1a1a2e', '#2d0a2e', '#0e1a0e', '#1a0e0e', '#ffffff'].map(c => (
+                              <button key={c} onClick={() => updateHomeNav(i, { bgColor: c })}
+                                style={{
+                                  width: '20px', height: '20px', borderRadius: '50%', background: c, border: item.bgColor === c ? '2px solid var(--color-accent)' : '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', padding: 0,
+                                }} />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
         {/* ════════ PROFILE ════════ */}
         {activeSection === 'profile' && (
           <div className="admin-section animate-in">
@@ -205,15 +409,18 @@ export default function AdminPage() {
                   cursor: 'pointer', fontSize: '0.75rem', color: 'var(--color-text-muted)',
                   transition: 'border-color 0.2s',
                 }}>
-                  <Upload size={20} style={{ marginBottom: '8px', opacity: 0.4 }} />
-                  Cliquez pour uploader une image
+                  {uploading === 'hero' ? (
+                    <Loader2 size={20} style={{ marginBottom: '8px', opacity: 0.6, animation: 'spin 1s linear infinite' }} />
+                  ) : (
+                    <Upload size={20} style={{ marginBottom: '8px', opacity: 0.4 }} />
+                  )}
+                  {uploading === 'hero' ? 'Upload en cours...' : 'Cliquez pour uploader une image'}
                   <input type="file" accept="image/*" style={{ display: 'none' }}
                     onChange={e => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      const reader = new FileReader();
-                      reader.onload = () => updateProfile({ heroBanner: reader.result as string });
-                      reader.readAsDataURL(file);
+                      handleImageUpload(file, 'hero', url => updateProfile({ heroBanner: url }));
+                      e.target.value = '';
                     }} />
                 </label>
               )}
@@ -230,13 +437,11 @@ export default function AdminPage() {
                 </div>
               ) : (
                 <label style={{ width: '64px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.12)', borderRadius: '12px', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--color-text-muted)' }}>
-                  +
+                  {uploading === 'icon' ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : '+'}
                   <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
                     const file = e.target.files?.[0];
                     if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = () => updateProfile({ appIcon: reader.result as string });
-                    reader.readAsDataURL(file);
+                    handleImageUpload(file, 'icon', url => updateProfile({ appIcon: url }));
                     e.target.value = '';
                   }} />
                 </label>
@@ -280,6 +485,61 @@ export default function AdminPage() {
                   }} />
               </div>
             ))}
+            {/* CV / Parcours */}
+            <h3 className="admin-subsection">Parcours (CV)</h3>
+            {(data.profile.cvSections || []).map((section, si) => (
+              <div key={si} className="admin-card" style={{ padding: '12px', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
+                  <input className="admin-input" value={section.title} style={{ flex: 1, fontWeight: 600, fontSize: '0.78rem' }}
+                    placeholder="Titre de la section"
+                    onChange={e => {
+                      const cvSections = [...(data.profile.cvSections || [])];
+                      cvSections[si] = { ...section, title: e.target.value };
+                      updateProfile({ cvSections });
+                    }} />
+                  <button onClick={() => {
+                    const cvSections = (data.profile.cvSections || []).filter((_: any, i: number) => i !== si);
+                    updateProfile({ cvSections });
+                  }} style={{ color: '#e53e3e', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+                {section.items.map((item: string, ii: number) => (
+                  <div key={ii} style={{ display: 'flex', gap: '6px', marginBottom: '4px' }}>
+                    <input className="admin-input" value={item} style={{ flex: 1, fontSize: '0.72rem' }}
+                      onChange={e => {
+                        const cvSections = [...(data.profile.cvSections || [])];
+                        const items = [...section.items];
+                        items[ii] = e.target.value;
+                        cvSections[si] = { ...section, items };
+                        updateProfile({ cvSections });
+                      }} />
+                    <button onClick={() => {
+                      const cvSections = [...(data.profile.cvSections || [])];
+                      cvSections[si] = { ...section, items: section.items.filter((_: any, i: number) => i !== ii) };
+                      updateProfile({ cvSections });
+                    }} style={{ color: '#e53e3e', background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}>
+                      <Trash2 size={10} />
+                    </button>
+                  </div>
+                ))}
+                <button className="btn btn-sm" style={{ fontSize: '0.6rem', marginTop: '4px' }}
+                  onClick={() => {
+                    const cvSections = [...(data.profile.cvSections || [])];
+                    cvSections[si] = { ...section, items: [...section.items, ''] };
+                    updateProfile({ cvSections });
+                  }}>
+                  <Plus size={10} /> Ajouter un item
+                </button>
+              </div>
+            ))}
+            <button className="btn btn-sm btn-primary" style={{ fontSize: '0.65rem', marginTop: '4px' }}
+              onClick={() => {
+                const cvSections = [...(data.profile.cvSections || []), { title: 'Nouvelle section', items: [] as string[] }];
+                updateProfile({ cvSections });
+              }}>
+              <Plus size={10} /> Ajouter une section CV
+            </button>
           </div>
         )}
 
@@ -318,8 +578,8 @@ export default function AdminPage() {
                     <AdminField label="Titre" value={artwork.title}
                       onChange={v => updateArtwork(artwork.id, { title: v })} />
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <AdminField label="Année" value={String(artwork.year)} style={{ width: '80px' }}
-                        onChange={v => updateArtwork(artwork.id, { year: parseInt(v) || 2024 })} />
+                      <AdminField label="Année" value={artwork.year ? String(artwork.year) : ''} style={{ width: '80px' }}
+                        onChange={v => updateArtwork(artwork.id, { year: parseInt(v) || undefined })} />
                       <AdminField label="Dimensions" value={artwork.dimensions} style={{ flex: 1 }}
                         onChange={v => updateArtwork(artwork.id, { dimensions: v })} />
                     </div>
@@ -331,6 +591,7 @@ export default function AdminPage() {
                       <AdminSelect label="Catégorie" value={artwork.category}
                         options={[
                           { value: 'toile', label: 'Toile' },
+                          { value: 'papier', label: 'Papier' },
                           { value: 'fresque', label: 'Fresque' },
                           { value: 'graphisme', label: 'Graphisme' },
                           { value: 'serigraphie', label: 'Sérigraphie' },
@@ -346,8 +607,10 @@ export default function AdminPage() {
                         ]}
                         onChange={v => updateArtwork(artwork.id, { status: v as Artwork['status'] })} />
                     </div>
-                    <AdminField label="Prix" value={artwork.price || ''}
+                    <AdminField label="Prix (€)" value={artwork.price || ''}
                       onChange={v => updateArtwork(artwork.id, { price: v || undefined })} />
+                    <AdminField label="Signature" value={artwork.signature || ''}
+                      onChange={v => updateArtwork(artwork.id, { signature: v || undefined })} />
 
                     {/* ── Images (1 required, up to 5) ── */}
                     <h3 className="admin-subsection" style={{ marginTop: '12px' }}>
@@ -372,16 +635,14 @@ export default function AdminPage() {
                       ))}
                       {(artwork.images || []).length < 5 && (
                         <label style={{ width: '72px', height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.12)', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--color-text-muted)' }}>
-                          +
+                          {uploading === `artworks/${artwork.id}` ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : '+'}
                           <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
                             const file = e.target.files?.[0];
                             if (!file) return;
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                              const imgs = [...(artwork.images || []), reader.result as string];
+                            handleImageUpload(file, `artworks/${artwork.id}`, url => {
+                              const imgs = [...(artwork.images || []), url];
                               updateArtwork(artwork.id, { images: imgs });
-                            };
-                            reader.readAsDataURL(file);
+                            });
                             e.target.value = '';
                           }} />
                         </label>
@@ -448,6 +709,17 @@ export default function AdminPage() {
                       onChange={v => updateNews(post.id, { category: v as NewsPost['category'] })} />
                     <AdminTextarea label="Contenu" value={post.content}
                       onChange={v => updateNews(post.id, { content: v })} />
+
+                    {/* News images (multi) */}
+                    <h3 className="admin-subsection" style={{ marginTop: '8px' }}>Images</h3>
+                    <MultiImageUpload
+                      images={post.images || ((post as any).image ? [(post as any).image] : [])}
+                      max={5}
+                      folder={`news/${post.id}`}
+                      onUpload={(file, folder) => uploadImage(file, folder)}
+                      onChange={imgs => updateNews(post.id, { images: imgs })}
+                    />
+
                     <button className="btn btn-sm" style={{ color: '#e53e3e', fontSize: '0.7rem', marginTop: '8px' }}
                       onClick={() => { if (confirm('Supprimer ?')) deleteNews(post.id); }}>
                       <Trash2 size={12} /> Supprimer
@@ -459,68 +731,73 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ════════ EXHIBITIONS ════════ */}
-        {activeSection === 'exhibitions' && (
+        {/* ════════ FRESQUES ════════ */}
+        {activeSection === 'fresques' && (
           <div className="admin-section animate-in">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 className="admin-section-title" style={{ margin: 0 }}>Expositions</h2>
+              <h2 className="admin-section-title" style={{ margin: 0 }}>Fresques</h2>
               <button className="btn btn-primary btn-sm"
-                onClick={() => addExhibition({ year: String(new Date().getFullYear()), title: '', venue: '', type: 'Solo' })}>
+                onClick={() => {
+                  const id = String(Date.now());
+                  addArtwork({
+                    id, title: 'Nouvelle fresque', year: new Date().getFullYear(),
+                    technique: '', dimensions: '', description: '', images: [],
+                    category: 'fresque', isFeatured: false, status: 'available',
+                  });
+                }}>
                 <Plus size={14} /> Ajouter
               </button>
             </div>
+            <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginBottom: '16px', fontWeight: 300 }}>
+              Œuvres murales — gérées comme des œuvres du Store avec la catégorie «&nbsp;fresque&nbsp;».
+            </p>
 
-            {data.exhibitions.map((exh, i) => (
-              <div key={i} className="admin-card" style={{ padding: '12px' }}>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <input className="admin-input" value={exh.year} style={{ width: '60px' }}
-                    onChange={e => {
-                      const exhibitions = [...data.exhibitions];
-                      exhibitions[i] = { ...exh, year: e.target.value };
-                      useSiteData.length; // just trigger
-                    }}
-                    placeholder="Année" readOnly />
-                  <input className="admin-input" value={exh.title} style={{ flex: 1 }}
-                    placeholder="Titre" readOnly />
-                  <input className="admin-input" value={exh.venue} style={{ flex: 1 }}
-                    placeholder="Lieu" readOnly />
-                  <input className="admin-input" value={exh.type} style={{ width: '70px' }}
-                    placeholder="Type" readOnly />
-                  <button onClick={() => deleteExhibition(i)}
-                    style={{ color: '#e53e3e', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
-                    <Trash2 size={14} />
-                  </button>
+            {data.artworks.filter(a => a.category === 'fresque').map(artwork => (
+              <div key={artwork.id} className="admin-card" style={{ padding: '12px', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+                  onClick={() => setEditingTile(editingTile === `fresque-${artwork.id}` ? null : `fresque-${artwork.id}`)}>
+                  <div style={{ width: '50px', height: '50px', flexShrink: 0, overflow: 'hidden', background: 'var(--color-dark-surface)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    {artwork.images?.[0] && <img src={artwork.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 600 }}>{artwork.title}</div>
+                    <div style={{ fontSize: '0.58rem', color: 'var(--color-text-muted)' }}>{artwork.year ?? 'Année ?'} — {artwork.dimensions || 'Dimensions non définies'}</div>
+                  </div>
+                  <ChevronRight size={14} style={{ opacity: 0.3, transition: 'transform 0.2s', transform: editingTile === `fresque-${artwork.id}` ? 'rotate(90deg)' : 'none' }} />
                 </div>
+
+                {editingTile === `fresque-${artwork.id}` && (
+                  <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                    <AdminField label="Titre" value={artwork.title} onChange={v => updateArtwork(artwork.id, { title: v })} />
+                    <AdminField label="Année" value={artwork.year ? String(artwork.year) : ''} onChange={v => updateArtwork(artwork.id, { year: parseInt(v) || undefined })} />
+                    <AdminField label="Lieu" value={artwork.lieu || ''} onChange={v => updateArtwork(artwork.id, { lieu: v })} />
+                    <AdminField label="Dimensions" value={artwork.dimensions} onChange={v => updateArtwork(artwork.id, { dimensions: v })} />
+                    <AdminField label="Description" value={artwork.description} onChange={v => updateArtwork(artwork.id, { description: v })} />
+
+                    {/* Images (multi) */}
+                    <h3 className="admin-subsection" style={{ marginTop: '8px' }}>Images</h3>
+                    <MultiImageUpload
+                      images={artwork.images || []}
+                      max={5}
+                      folder={`fresques/${artwork.id}`}
+                      onUpload={(file, folder) => uploadImage(file, folder)}
+                      onChange={imgs => updateArtwork(artwork.id, { images: imgs })}
+                    />
+
+                    <button onClick={() => deleteArtwork(artwork.id)}
+                      className="btn btn-sm" style={{ color: '#e53e3e', fontSize: '0.7rem', marginTop: '4px' }}>
+                      <Trash2 size={12} /> Supprimer
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
-          </div>
-        )}
 
-        {/* ════════ PRESS ════════ */}
-        {activeSection === 'press' && (
-          <div className="admin-section animate-in">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 className="admin-section-title" style={{ margin: 0 }}>Presse</h2>
-              <button className="btn btn-primary btn-sm"
-                onClick={() => addPress({ title: '', excerpt: '', link: '' })}>
-                <Plus size={14} /> Ajouter
-              </button>
-            </div>
-
-            {data.press.map((item, i) => (
-              <div key={i} className="admin-card" style={{ padding: '12px' }}>
-                <AdminField label="Titre" value={item.title}
-                  onChange={v => updatePress(i, { title: v })} />
-                <AdminField label="Citation" value={item.excerpt}
-                  onChange={v => updatePress(i, { excerpt: v })} />
-                <AdminField label="Lien (URL)" value={item.link || ''}
-                  onChange={v => updatePress(i, { link: v })} />
-                <button onClick={() => deletePress(i)}
-                  className="btn btn-sm" style={{ color: '#e53e3e', fontSize: '0.7rem', marginTop: '4px' }}>
-                  <Trash2 size={12} /> Supprimer
-                </button>
+            {fresquesCount === 0 && (
+              <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--color-text-muted)', fontSize: '0.72rem' }}>
+                Aucune fresque. Créez une œuvre avec la catégorie «&nbsp;fresque&nbsp;».
               </div>
-            ))}
+            )}
           </div>
         )}
 
@@ -531,7 +808,7 @@ export default function AdminPage() {
               <h2 className="admin-section-title" style={{ margin: 0 }}>Portfolio</h2>
               <button className="btn btn-primary btn-sm" onClick={() => {
                 const id = String(Date.now());
-                addPortfolio({ id, title: 'Nouveau projet', description: '', image: '', link: '', category: '' });
+                addPortfolio({ id, title: 'Nouveau projet', description: '', images: [], link: '', category: '' });
                 setEditingPortfolio(id);
               }}>
                 <Plus size={14} /> Ajouter
@@ -564,26 +841,15 @@ export default function AdminPage() {
                     <AdminField label="Lien (URL)" value={item.link || ''}
                       onChange={v => updatePortfolio(item.id, { link: v })} />
 
-                    {/* Portfolio image */}
-                    <h3 className="admin-subsection" style={{ marginTop: '8px' }}>Image</h3>
-                    {item.image ? (
-                      <div style={{ position: 'relative', marginBottom: '8px' }}>
-                        <img src={item.image} alt="" style={{ width: '100%', height: '100px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.06)' }} />
-                        <button onClick={() => updatePortfolio(item.id, { image: '' })}
-                          style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(0,0,0,0.7)', color: '#fff', border: 'none', padding: '2px 6px', fontSize: '0.6rem', cursor: 'pointer' }}>✕</button>
-                      </div>
-                    ) : (
-                      <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80px', border: '1px dashed rgba(255,255,255,0.12)', cursor: 'pointer', fontSize: '0.72rem', color: 'var(--color-text-muted)', marginBottom: '8px' }}>
-                        <Upload size={16} style={{ marginRight: '6px', opacity: 0.4 }} /> Ajouter une image
-                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          const reader = new FileReader();
-                          reader.onload = () => updatePortfolio(item.id, { image: reader.result as string });
-                          reader.readAsDataURL(file);
-                        }} />
-                      </label>
-                    )}
+                    {/* Portfolio images (multi) */}
+                    <h3 className="admin-subsection" style={{ marginTop: '8px' }}>Images</h3>
+                    <MultiImageUpload
+                      images={item.images || ((item as any).image ? [(item as any).image] : [])}
+                      max={5}
+                      folder={`portfolio/${item.id}`}
+                      onUpload={(file, folder) => uploadImage(file, folder)}
+                      onChange={imgs => updatePortfolio(item.id, { images: imgs })}
+                    />
 
                     <button className="btn btn-sm" style={{ color: '#e53e3e', fontSize: '0.7rem', marginTop: '4px' }}
                       onClick={() => { if (confirm('Supprimer ce projet ?')) deletePortfolio(item.id); }}>
@@ -593,6 +859,129 @@ export default function AdminPage() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {activeSection === 'menu' && (
+          <div className="admin-section animate-in">
+            <h2 className="admin-section-title">Configuration du menu</h2>
+
+            {/* Contact email */}
+            <AdminField label="Email de contact (formulaire)"
+              value={data.contactEmail || ''} onChange={v => updateContactEmail(v)} />
+
+            {/* PWA Install Icon */}
+            <h3 className="admin-subsection">Icône PWA (installation)</h3>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+              {data.profile.appIcon ? (
+                <div style={{ position: 'relative' }}>
+                  <img src={data.profile.appIcon} alt="" style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }} />
+                  <button onClick={() => updateProfile({ appIcon: '' })}
+                    style={{ position: 'absolute', top: '-4px', right: '-4px', background: 'rgba(0,0,0,0.8)', color: '#fff', border: 'none', width: '18px', height: '18px', borderRadius: '50%', fontSize: '0.5rem', cursor: 'pointer', lineHeight: 1 }}>✕</button>
+                </div>
+              ) : (
+                <label style={{ width: '64px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.12)', borderRadius: '12px', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--color-text-muted)' }}>
+                  +
+                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    handleImageUpload(file, 'icon', url => updateProfile({ appIcon: url }));
+                    e.target.value = '';
+                  }} />
+                </label>
+              )}
+              <span style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)' }}>512×512 px recommandé</span>
+            </div>
+
+            {/* Menu items */}
+            <h3 className="admin-subsection">Items du menu</h3>
+            {(data.menuConfig?.items || []).map((item, i) => (
+              <div key={item.route} className="admin-card" style={{ padding: '10px 12px', marginBottom: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)', minWidth: '20px' }}>{String(i + 1).padStart(2, '0')}</span>
+                  <input className="admin-input" value={item.label} style={{ flex: 1, fontSize: '0.78rem', fontWeight: 600 }}
+                    onChange={e => {
+                      const items = [...(data.menuConfig?.items || [])];
+                      items[i] = { ...item, label: e.target.value };
+                      updateMenuConfig({ items });
+                    }} />
+                  <input type="color" value={item.textColor || '#f2ede8'}
+                    onChange={e => {
+                      const items = [...(data.menuConfig?.items || [])];
+                      items[i] = { ...item, textColor: e.target.value };
+                      updateMenuConfig({ items });
+                    }}
+                    style={{ width: '28px', height: '28px', border: 'none', background: 'none', cursor: 'pointer' }}
+                    title="Couleur du texte" />
+                </div>
+              </div>
+            ))}
+
+            {/* Per-line decorative config */}
+            <h3 className="admin-subsection" style={{ marginTop: '16px' }}>Lignes décoratives</h3>
+            <p style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', marginBottom: '12px' }}>
+              Chaque ligne entre les items du menu est configurable individuellement.
+            </p>
+            {(() => {
+              const items = data.menuConfig?.items || [];
+              const lineCount = Math.max(items.length - 1, 0);
+              const lines = data.menuConfig?.lines || [];
+              return Array.from({ length: lineCount }, (_, li) => {
+                const line = lines[li] || { color: data.menuConfig?.lineColor || '#c9a090', thickness: 4, offsetX: 10, width: 30 };
+                const updateLine = (updates: Partial<typeof line>) => {
+                  const newLines = [...lines];
+                  while (newLines.length <= li) newLines.push({ color: data.menuConfig?.lineColor || '#c9a090', thickness: 4, offsetX: 10, width: 30 });
+                  newLines[li] = { ...newLines[li], ...updates };
+                  updateMenuConfig({ lines: newLines });
+                };
+                return (
+                  <div key={li} className="admin-card" style={{ padding: '10px 12px', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)', marginBottom: '6px' }}>
+                      Ligne {li + 1} — entre «{items[li]?.label}» et «{items[li + 1]?.label}»
+                    </div>
+                    {/* Preview */}
+                    <div style={{ padding: '4px 0', marginBottom: '8px', position: 'relative', height: '12px' }}>
+                      <div style={{
+                        position: 'absolute',
+                        left: `${line.offsetX}%`,
+                        width: `${line.width}%`,
+                        height: `${line.thickness}px`,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: line.color,
+                        borderRadius: '99px',
+                      }} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <div>
+                        <label className="admin-label">Couleur</label>
+                        <input type="color" value={line.color}
+                          onChange={e => updateLine({ color: e.target.value })}
+                          style={{ width: '100%', height: '28px', border: 'none', background: 'none', cursor: 'pointer' }} />
+                      </div>
+                      <div>
+                        <label className="admin-label">Épaisseur ({line.thickness}px)</label>
+                        <input type="range" min="1" max="16" value={line.thickness}
+                          onChange={e => updateLine({ thickness: parseInt(e.target.value) })}
+                          style={{ width: '100%' }} />
+                      </div>
+                      <div>
+                        <label className="admin-label">Position ({line.offsetX}%)</label>
+                        <input type="range" min="0" max="80" value={line.offsetX}
+                          onChange={e => updateLine({ offsetX: parseInt(e.target.value) })}
+                          style={{ width: '100%' }} />
+                      </div>
+                      <div>
+                        <label className="admin-label">Largeur ({line.width}%)</label>
+                        <input type="range" min="5" max="80" value={line.width}
+                          onChange={e => updateLine({ width: parseInt(e.target.value) })}
+                          style={{ width: '100%' }} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
           </div>
         )}
 
@@ -847,7 +1236,7 @@ function NotificationsSection() {
         <div style={{ marginBottom: '10px' }}>
           <label className="admin-label">Message</label>
           <textarea className="admin-input" value={message} onChange={e => setMessage(e.target.value)}
-            placeholder="ex: Découvrez 'Sunset Reflections', ma dernière toile..."
+            placeholder="ex : Découvrez « On dirait le sud », ma dernière toile…"
             rows={3} style={{ resize: 'vertical', minHeight: '60px' }} />
         </div>
 
