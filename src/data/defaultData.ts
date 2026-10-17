@@ -342,4 +342,6 @@ export const defaultSiteData: SiteData = {
   contactEmail: 'adrien.enaer@gmail.com',
   // Numéro du portfolio 2026 d'Adrien (dos de couverture)
   whatsapp: '33684732265',
+  // Dossier « Site Adrien » du Drive de Myriam (sous-dossiers Toiles, Papiers, Sérigraphies, Fresques, Journal)
+  driveFolderUrl: 'https://drive.google.com/drive/folders/1fs_EJVulvBkTltv4dQdtj8b1j1mpzV6j',
 };
