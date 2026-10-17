@@ -2352,3 +2352,61 @@ textarea.admin-input {
   text-underline-offset: 3px;
 }
 .contact-google { display: block; margin: 0 0 14px; padding: 0; }
+
+/* Filtre : deux photos superposées */
+.filter-mode button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.filter-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.filter-slots.is-compact { margin: 0 0 16px; }
+.filter-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 150px;
+  padding: 14px 10px;
+  font: inherit;
+  color: var(--color-text-secondary);
+  background: var(--color-dark-card);
+  border: 1px dashed rgba(255,255,255,0.14);
+  cursor: pointer;
+  text-align: center;
+}
+.filter-slots.is-compact .filter-slot { min-height: 0; padding: 10px; }
+.filter-slot.is-filled { border-style: solid; border-color: var(--color-accent-muted); }
+.filter-slot img { width: 100%; height: 90px; object-fit: cover; }
+.filter-slots.is-compact .filter-slot img { height: 56px; }
+.filter-slot strong { font-size: 0.78rem; font-weight: 500; color: var(--color-white); }
+.filter-slot small { font-size: 0.62rem; color: var(--color-text-muted); line-height: 1.4; }
+.filter-swap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 12px;
+  font: inherit;
+  font-size: 0.7rem;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer;
+}
+.filter-presets { margin: 18px 0 16px; }
+.filter-presets-title { font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 10px; }
+.filter-presets-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.filter-preset {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px;
+  font: inherit;
+  text-align: left;
+  color: var(--color-text-secondary);
+  background: var(--color-dark-card);
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+}
+.filter-preset.active { border-color: var(--color-accent); }
+.filter-preset img { width: 100%; height: 76px; object-fit: cover; margin-bottom: 4px; }
+.filter-preset strong { font-size: 0.72rem; font-weight: 500; color: var(--color-white); }
+.filter-preset small { font-size: 0.58rem; color: var(--color-text-muted); }
