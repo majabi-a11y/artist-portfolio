@@ -33,16 +33,16 @@ export default function BottomNav() {
       .map(item => ({
         label: item.label,
         route: item.route,
-        textColor: item.textColor || '#f4efe9',
+        textColor: item.textColor || '#1d1aa8',
       }));
 
     let items = homeItems.length ? homeItems : (
       data.menuConfig?.items?.length ? data.menuConfig.items : [
-        { label: 'Accueil', route: '/', textColor: '#f4efe9' },
-        { label: 'Catalogue', route: '/catalogue', textColor: '#f4efe9' },
-        { label: 'Atelier', route: '/portfolio', textColor: '#f4efe9' },
-        { label: 'Journal', route: '/journal', textColor: '#f4efe9' },
-        { label: 'Contact', route: '/contact', textColor: '#f4efe9' },
+        { label: 'Accueil', route: '/', textColor: '#1d1aa8' },
+        { label: 'Catalogue', route: '/catalogue', textColor: '#1d1aa8' },
+        { label: 'Atelier', route: '/portfolio', textColor: '#1d1aa8' },
+        { label: 'Journal', route: '/journal', textColor: '#1d1aa8' },
+        { label: 'Contact', route: '/contact', textColor: '#1d1aa8' },
       ]
     );
     // Deduplicate by route AND by label (case-insensitive)
@@ -72,8 +72,8 @@ export default function BottomNav() {
   }, [isOpen, data.artworks]);
 
   const lineConfig = useMemo(() => {
-    const cfg = data.menuConfig || { items: [], lineColor: '#ff5c9d', lineThickness: 4 };
-    return { color: cfg.lineColor || '#ff5c9d', thickness: cfg.lineThickness || 4 };
+    const cfg = data.menuConfig || { items: [], lineColor: '#1d1aa8', lineThickness: 4 };
+    return { color: cfg.lineColor || '#1d1aa8', thickness: cfg.lineThickness || 4 };
   }, [data.menuConfig]);
 
   const handleClick = useCallback((route: string) => {
@@ -105,10 +105,10 @@ export default function BottomNav() {
         <nav className="menu-nav">
           {menuItems.map((item, i) => {
             // Per-line config: lines[i-1] corresponds to the line before item i
-            const cfg = data.menuConfig || { items: [], lines: [], lineColor: '#ff5c9d', lineThickness: 4 };
+            const cfg = data.menuConfig || { items: [], lines: [], lineColor: '#1d1aa8', lineThickness: 4 };
             const lineIdx = i - 1;
             const lineCfg = cfg.lines?.[lineIdx];
-            const lColor = taste ? taste.colours[lineIdx % taste.colours.length] : (lineCfg?.color || cfg.lineColor || '#ff5c9d');
+            const lColor = taste ? taste.colours[lineIdx % taste.colours.length] : (lineCfg?.color || cfg.lineColor || '#1d1aa8');
             const lThick = lineCfg?.thickness || cfg.lineThickness || 4;
             const lOffset = lineCfg?.offsetX ?? 10;
             const lWidth = lineCfg?.width ?? 30;

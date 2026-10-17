@@ -281,7 +281,7 @@ export default function AdminPage() {
                   {/* Tile header — always visible */}
                   <div style={{
                     display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px',
-                    cursor: 'pointer', background: isOpen ? 'rgba(255,255,255,0.02)' : 'transparent',
+                    cursor: 'pointer', background: isOpen ? 'rgba(var(--ink-rgb), 0.02)' : 'transparent',
                   }} onClick={() => setEditingTile(isOpen ? null : `tile-${i}`)}>
                     {/* Reorder buttons */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
@@ -298,7 +298,7 @@ export default function AdminPage() {
 
                     {/* Thumbnail */}
                     <div style={{
-                      width: '44px', height: '44px', flexShrink: 0, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)',
+                      width: '44px', height: '44px', flexShrink: 0, overflow: 'hidden', border: '1px solid rgba(var(--ink-rgb), 0.06)',
                       background: 'var(--color-dark-surface)',
                     }}>
                       {(item.image || (isBio && data.profile.heroBanner)) && (
@@ -318,7 +318,7 @@ export default function AdminPage() {
                     {/* Color swatch */}
                     <div style={{
                       width: '16px', height: '16px', borderRadius: '50%',
-                      border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0,
+                      border: '1px solid rgba(var(--ink-rgb), 0.1)', flexShrink: 0,
                       background: item.textColor || '#f4efe9',
                     }} />
 
@@ -330,14 +330,14 @@ export default function AdminPage() {
 
                   {/* Expanded editor */}
                   {isOpen && (
-                    <div style={{ padding: '0 14px 14px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div style={{ padding: '0 14px 14px', borderTop: '1px solid rgba(var(--ink-rgb), 0.04)' }}>
                       {/* Image */}
                       <div style={{ marginTop: '12px', marginBottom: '12px' }}>
                         <label className="admin-label">Image de fond</label>
                         {(item.image || (isBio && data.profile.heroBanner)) ? (
                           <div style={{ position: 'relative' }}>
                             <img src={item.image || (isBio ? data.profile.heroBanner : '')} alt=""
-                              style={{ width: '100%', height: '120px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.06)' }} />
+                              style={{ width: '100%', height: '120px', objectFit: 'cover', border: '1px solid rgba(var(--ink-rgb), 0.06)' }} />
                             <button onClick={() => {
                               if (isBio && !item.image) updateProfile({ heroBanner: '' });
                               else updateHomeNav(i, { image: '' });
@@ -349,7 +349,7 @@ export default function AdminPage() {
                         ) : (
                           <label style={{
                             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                            height: '80px', border: '1px dashed rgba(255,255,255,0.12)', cursor: 'pointer', fontSize: '0.72rem', color: 'var(--color-text-muted)',
+                            height: '80px', border: '1px dashed rgba(var(--ink-rgb), 0.12)', cursor: 'pointer', fontSize: '0.72rem', color: 'var(--color-text-muted)',
                           }}>
                             {uploading === `tile-${i}` ? (
                               <><Loader2 size={16} style={{ marginBottom: '6px', animation: 'spin 1s linear infinite' }} /> Upload...</>
@@ -376,12 +376,12 @@ export default function AdminPage() {
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                           <input type="color" value={item.textColor || '#f4efe9'}
                             onChange={e => updateHomeNav(i, { textColor: e.target.value })}
-                            style={{ width: '32px', height: '32px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', cursor: 'pointer', padding: 0 }} />
+                            style={{ width: '32px', height: '32px', border: '1px solid rgba(var(--ink-rgb), 0.1)', background: 'transparent', cursor: 'pointer', padding: 0 }} />
                           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                             {['#f4efe9', '#ffffff', '#000000', '#ff5c9d', '#e8cdbf', '#1d1aa8'].map(c => (
                               <button key={c} onClick={() => updateHomeNav(i, { textColor: c })}
                                 style={{
-                                  width: '20px', height: '20px', borderRadius: '50%', background: c, border: item.textColor === c ? '2px solid var(--color-accent)' : '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', padding: 0,
+                                  width: '20px', height: '20px', borderRadius: '50%', background: c, border: item.textColor === c ? '2px solid var(--color-accent)' : '1px solid rgba(var(--ink-rgb), 0.12)', cursor: 'pointer', padding: 0,
                                 }} />
                             ))}
                           </div>
@@ -394,12 +394,12 @@ export default function AdminPage() {
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                           <input type="color" value={item.bgColor || '#0d0b14'}
                             onChange={e => updateHomeNav(i, { bgColor: e.target.value })}
-                            style={{ width: '32px', height: '32px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', cursor: 'pointer', padding: 0 }} />
+                            style={{ width: '32px', height: '32px', border: '1px solid rgba(var(--ink-rgb), 0.1)', background: 'transparent', cursor: 'pointer', padding: 0 }} />
                           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                             {['#0d0b14', '#16139e', '#452843', '#52204b', '#e8cdbf', '#ffffff'].map(c => (
                               <button key={c} onClick={() => updateHomeNav(i, { bgColor: c })}
                                 style={{
-                                  width: '20px', height: '20px', borderRadius: '50%', background: c, border: item.bgColor === c ? '2px solid var(--color-accent)' : '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', padding: 0,
+                                  width: '20px', height: '20px', borderRadius: '50%', background: c, border: item.bgColor === c ? '2px solid var(--color-accent)' : '1px solid rgba(var(--ink-rgb), 0.12)', cursor: 'pointer', padding: 0,
                                 }} />
                             ))}
                           </div>
@@ -423,7 +423,7 @@ export default function AdminPage() {
               {data.profile.heroBanner ? (
                 <div style={{ position: 'relative' }}>
                   <img src={data.profile.heroBanner} alt="Banner"
-                    style={{ width: '100%', height: '150px', objectFit: 'cover', display: 'block', border: '1px solid rgba(255,255,255,0.06)' }} />
+                    style={{ width: '100%', height: '150px', objectFit: 'cover', display: 'block', border: '1px solid rgba(var(--ink-rgb), 0.06)' }} />
                   <button
                     onClick={() => updateProfile({ heroBanner: '' })}
                     style={{
@@ -438,7 +438,7 @@ export default function AdminPage() {
               ) : (
                 <label style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  height: '120px', border: '1px dashed rgba(255,255,255,0.12)',
+                  height: '120px', border: '1px dashed rgba(var(--ink-rgb), 0.12)',
                   cursor: 'pointer', fontSize: '0.75rem', color: 'var(--color-text-muted)',
                   transition: 'border-color 0.2s',
                 }}>
@@ -464,12 +464,12 @@ export default function AdminPage() {
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
               {data.profile.appIcon ? (
                 <div style={{ position: 'relative' }}>
-                  <img src={data.profile.appIcon} alt="" style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }} />
+                  <img src={data.profile.appIcon} alt="" style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '12px', border: '1px solid rgba(var(--ink-rgb), 0.08)' }} />
                   <button onClick={() => updateProfile({ appIcon: '' })}
                     style={{ position: 'absolute', top: '-4px', right: '-4px', background: 'rgba(0,0,0,0.8)', color: '#fff', border: 'none', width: '18px', height: '18px', borderRadius: '50%', fontSize: '0.5rem', cursor: 'pointer', lineHeight: 1 }}>✕</button>
                 </div>
               ) : (
-                <label style={{ width: '64px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.12)', borderRadius: '12px', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--color-text-muted)' }}>
+                <label style={{ width: '64px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(var(--ink-rgb), 0.12)', borderRadius: '12px', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--color-text-muted)' }}>
                   {uploading === 'icon' ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : '+'}
                   <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
                     const file = e.target.files?.[0];
@@ -655,7 +655,7 @@ export default function AdminPage() {
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
                       {(artwork.images || []).map((img, idx) => (
                         <div key={idx} style={{ position: 'relative', width: '72px', height: '72px' }}>
-                          <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.08)' }} />
+                          <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', border: '1px solid rgba(var(--ink-rgb), 0.08)' }} />
                           {idx === 0 && (
                             <span style={{ position: 'absolute', bottom: '2px', left: '2px', fontSize: '0.5rem', background: 'var(--color-accent)', color: '#000', padding: '1px 4px', fontWeight: 600 }}>COVER</span>
                           )}
@@ -667,7 +667,7 @@ export default function AdminPage() {
                         </div>
                       ))}
                       {(artwork.images || []).length < 5 && (
-                        <label style={{ width: '72px', height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.12)', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--color-text-muted)' }}>
+                        <label style={{ width: '72px', height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(var(--ink-rgb), 0.12)', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--color-text-muted)' }}>
                           {uploading === `artworks/${artwork.id}` ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : '+'}
                           <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
                             const file = e.target.files?.[0];
@@ -789,7 +789,7 @@ export default function AdminPage() {
               <div key={artwork.id} className="admin-card" style={{ padding: '12px', marginBottom: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
                   onClick={() => setEditingTile(editingTile === `fresque-${artwork.id}` ? null : `fresque-${artwork.id}`)}>
-                  <div style={{ width: '50px', height: '50px', flexShrink: 0, overflow: 'hidden', background: 'var(--color-dark-surface)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ width: '50px', height: '50px', flexShrink: 0, overflow: 'hidden', background: 'var(--color-dark-surface)', border: '1px solid rgba(var(--ink-rgb), 0.06)' }}>
                     {artwork.images?.[0] && <img src={artwork.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                   </div>
                   <div style={{ flex: 1 }}>
@@ -800,7 +800,7 @@ export default function AdminPage() {
                 </div>
 
                 {editingTile === `fresque-${artwork.id}` && (
-                  <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(var(--ink-rgb), 0.04)' }}>
                     <AdminField label="Titre" value={artwork.title} onChange={v => updateArtwork(artwork.id, { title: v })} />
                     <AdminField label="Année" value={artwork.year ? String(artwork.year) : ''} onChange={v => updateArtwork(artwork.id, { year: parseInt(v) || undefined })} />
                     <AdminField label="Lieu" value={artwork.lieu || ''} onChange={v => updateArtwork(artwork.id, { lieu: v })} />
@@ -908,12 +908,12 @@ export default function AdminPage() {
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
               {data.profile.appIcon ? (
                 <div style={{ position: 'relative' }}>
-                  <img src={data.profile.appIcon} alt="" style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }} />
+                  <img src={data.profile.appIcon} alt="" style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '12px', border: '1px solid rgba(var(--ink-rgb), 0.08)' }} />
                   <button onClick={() => updateProfile({ appIcon: '' })}
                     style={{ position: 'absolute', top: '-4px', right: '-4px', background: 'rgba(0,0,0,0.8)', color: '#fff', border: 'none', width: '18px', height: '18px', borderRadius: '50%', fontSize: '0.5rem', cursor: 'pointer', lineHeight: 1 }}>✕</button>
                 </div>
               ) : (
-                <label style={{ width: '64px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.12)', borderRadius: '12px', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--color-text-muted)' }}>
+                <label style={{ width: '64px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(var(--ink-rgb), 0.12)', borderRadius: '12px', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--color-text-muted)' }}>
                   +
                   <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
                     const file = e.target.files?.[0];
@@ -1033,7 +1033,7 @@ export default function AdminPage() {
                 <div style={{
                   width: '48px', height: '48px', borderRadius: '10px',
                   background: data.theme?.bgColor || '#0d0b14',
-                  border: '2px solid rgba(255,255,255,0.12)',
+                  border: '2px solid rgba(var(--ink-rgb), 0.12)',
                 }} />
                 <input type="color" value={data.theme?.bgColor || '#0d0b14'}
                   onChange={e => updateTheme({ bgColor: e.target.value })}
@@ -1049,7 +1049,7 @@ export default function AdminPage() {
                   <button key={c} onClick={() => updateTheme({ bgColor: c })}
                     style={{
                       width: '28px', height: '28px', borderRadius: '6px', background: c,
-                      border: (data.theme?.bgColor || '#0d0b14') === c ? '2px solid var(--color-accent)' : '1px solid rgba(255,255,255,0.1)',
+                      border: (data.theme?.bgColor || '#0d0b14') === c ? '2px solid var(--color-accent)' : '1px solid rgba(var(--ink-rgb), 0.1)',
                       cursor: 'pointer',
                     }} />
                 ))}
@@ -1066,7 +1066,7 @@ export default function AdminPage() {
                     onClick={() => updateTheme({ paletteId: id })}
                     style={{
                       background: data.theme?.bgColor || '#0d0b14',
-                      border: isActive ? `2px solid ${p.accent}` : '1px solid rgba(255,255,255,0.1)',
+                      border: isActive ? `2px solid ${p.accent}` : '1px solid rgba(var(--ink-rgb), 0.1)',
                       borderRadius: '12px',
                       padding: '14px 12px',
                       cursor: 'pointer',

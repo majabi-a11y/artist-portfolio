@@ -24,6 +24,8 @@ export const TEXT_PALETTES: Record<string, {
   accent: string;
   accentMuted: string;
 }> = {
+  // Piste D (choisie par Myriam) : papier, tout le texte à l'encre outremer de « Lignes de vies »
+  outremer: { name: 'Outremer', text: '#1d1aa8', textSecondary: 'rgba(29,26,168,0.78)', textMuted: 'rgba(29,26,168,0.64)', accent: '#1d1aa8', accentMuted: 'rgba(29,26,168,0.32)' },
   // D'après ses toiles : papier, encre violette, rose fluo du soleil de la couverture
   soleil: { name: 'Soleil', text: '#f4efe9', textSecondary: 'rgba(244,239,233,0.72)', textMuted: 'rgba(244,239,233,0.52)', accent: '#ff5c9d', accentMuted: 'rgba(255,92,157,0.42)' },
   warm: { name: 'Terracotta', text: '#f2ede8', textSecondary: 'rgba(242,237,232,0.55)', textMuted: 'rgba(242,237,232,0.25)', accent: '#c9a090', accentMuted: 'rgba(201,160,144,0.45)' },
@@ -53,8 +55,8 @@ function DynamicTheme() {
         description: 'Artiste peintre et muraliste — Montpellier',
         start_url: '/',
         display: 'standalone',
-        background_color: '#0d0b14',
-        theme_color: data.theme?.bgColor || '#0d0b14',
+        background_color: '#f4f1ea',
+        theme_color: data.theme?.bgColor || '#f4f1ea',
         orientation: 'portrait',
         icons: [
           { src: iconUrl, sizes: '192x192', type: 'image/png' },
@@ -71,7 +73,7 @@ function DynamicTheme() {
     const theme = data.theme;
     if (theme) {
       const root = document.documentElement;
-      const bg = theme.bgColor || '#0d0b14';
+      const bg = theme.bgColor || '#f4f1ea';
       root.style.setProperty('--color-bg', bg);
       root.style.setProperty('--color-black', bg);
 
@@ -82,11 +84,17 @@ function DynamicTheme() {
         return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
       };
       const [r, g, b] = hex2rgb(bg);
-      const nearBlack = `rgb(${Math.min(r+4,255)}, ${Math.min(g+4,255)}, ${Math.min(b+4,255)})`;
-      const surface = `rgb(${Math.min(r+12,255)}, ${Math.min(g+12,255)}, ${Math.min(b+12,255)})`;
-      const card = `rgb(${Math.min(r+8,255)}, ${Math.min(g+8,255)}, ${Math.min(b+8,255)})`;
-      const elevated = `rgb(${Math.min(r+18,255)}, ${Math.min(g+18,255)}, ${Math.min(b+18,255)})`;
-      const border = `rgba(${Math.min(r+40,255)}, ${Math.min(g+40,255)}, ${Math.min(b+40,255)}, 0.15)`;
+      // Fond clair (papier) : les surfaces s'assombrissent un peu ; fond sombre : elles s'éclaircissent
+      const light = (0.299 * r + 0.587 * g + 0.114 * b) > 140;
+      const shade = (d: number) => {
+        const k = light ? -d : d;
+        return `rgb(${Math.max(0, Math.min(r + k, 255))}, ${Math.max(0, Math.min(g + k, 255))}, ${Math.max(0, Math.min(b + k, 255))})`;
+      };
+      const nearBlack = shade(light ? 2 : 4);
+      const surface = shade(light ? 0 : 12);
+      const card = shade(light ? 7 : 8);
+      const elevated = shade(light ? 12 : 18);
+      const border = light ? 'rgba(29,26,168,0.14)' : `rgba(${Math.min(r+40,255)}, ${Math.min(g+40,255)}, ${Math.min(b+40,255)}, 0.15)`;
       root.style.setProperty('--color-near-black', nearBlack);
       root.style.setProperty('--color-surface', surface);
       root.style.setProperty('--color-dark-surface', surface);
@@ -94,7 +102,7 @@ function DynamicTheme() {
       root.style.setProperty('--color-dark-elevated', elevated);
       root.style.setProperty('--color-dark-border', border);
 
-      const palette = TEXT_PALETTES[theme.paletteId] || TEXT_PALETTES.soleil;
+      const palette = TEXT_PALETTES[theme.paletteId] || TEXT_PALETTES.outremer;
       root.style.setProperty('--color-text', palette.text);
       root.style.setProperty('--color-white', palette.text);
       root.style.setProperty('--color-text-secondary', palette.textSecondary);
@@ -102,6 +110,11 @@ function DynamicTheme() {
       root.style.setProperty('--color-accent', palette.accent);
       root.style.setProperty('--color-accent-muted', palette.accentMuted);
       root.style.setProperty('--color-accent-subtle', palette.accentMuted.replace(/[\d.]+\)$/, '0.1)'));
+      // Encre des bordures et voiles translucides : la couleur du texte, en r, g, b
+      const [tr, tg, tb] = hex2rgb(palette.text);
+      root.style.setProperty('--ink-rgb', `${tr}, ${tg}, ${tb}`);
+      root.style.setProperty('--color-pure-white', light ? palette.text : '#ffffff');
+      root.dataset.tone = light ? 'papier' : 'nuit';
 
       // SEO: dynamic meta tags
       document.title = `${data.profile.name} — ${data.profile.tagline}`;

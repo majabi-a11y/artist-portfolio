@@ -9,6 +9,8 @@ import { MessageCircle } from 'lucide-react';
 export default function ContactPage() {
   const { data } = useSiteData();
   const { profile } = data;
+  // WhatsApp a déjà son grand bouton plus bas : pas de doublon dans les coordonnées
+  const coordonnees = (profile.contact || []).filter(c => !(data.whatsapp && /whatsapp/i.test(c.label)));
   const [searchParams] = useSearchParams();
 
   // Build preset from URL params
@@ -41,13 +43,13 @@ export default function ContactPage() {
         </div>
 
         {/* Contact details */}
-        {profile.contact && profile.contact.length > 0 && (
+        {coordonnees.length > 0 && (
           <div className="card" style={{ padding: '24px', marginBottom: '20px' }}>
             <h3 style={{ fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.25em', color: 'var(--color-accent)', marginBottom: '16px' }}>
               Liens & Coordonnées
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-              {profile.contact.map((item, i) => {
+              {coordonnees.map((item, i) => {
                 const href = contactHref(item.label, item.value);
                 const isExternal = href.startsWith('http');
 
@@ -57,7 +59,7 @@ export default function ContactPage() {
                     style={{
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                       padding: '14px 0',
-                      borderBottom: i < profile.contact.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                      borderBottom: i < coordonnees.length - 1 ? '1px solid rgba(var(--ink-rgb), 0.06)' : 'none',
                       textDecoration: 'none', color: 'inherit', transition: 'opacity 0.2s',
                     }}
                   >

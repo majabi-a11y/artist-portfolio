@@ -66,7 +66,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     if (firestore.homeNav?.length) {
       const existingRoutes = new Set(firestore.homeNav.map(n => n.route));
       const missingDefaults = defaultSiteData.homeNav.filter(d => !existingRoutes.has(d.route));
-      const combined = [...firestore.homeNav.map(n => ({ ...n, textColor: n.textColor || '#f4efe9' })), ...missingDefaults];
+      const combined = [...firestore.homeNav.map(n => ({ ...n, textColor: n.textColor || '#1d1aa8' })), ...missingDefaults];
       const seen = new Set<string>();
       merged.homeNav = combined.filter(n => { if (seen.has(n.route)) return false; seen.add(n.route); return true; });
     }
@@ -248,7 +248,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
   }, [update]);
 
   const updateTheme = useCallback((updates: Partial<ThemeConfig>) => {
-    update(d => ({ ...d, theme: { ...(d.theme || { bgColor: '#0d0b14', paletteId: 'soleil' }), ...updates } }));
+    update(d => ({ ...d, theme: { ...(d.theme || { bgColor: '#f4f1ea', paletteId: 'outremer' }), ...updates } }));
   }, [update]);
 
   const updateHomeNav = useCallback((index: number, updates: Partial<HomeNavItem>) => {

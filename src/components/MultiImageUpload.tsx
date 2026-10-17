@@ -36,7 +36,7 @@ export default function MultiImageUpload({ images, max = 5, folder, onUpload, on
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
           {images.map((url, i) => (
             <div key={i} style={{ position: 'relative', width: '64px', height: '64px' }}>
-              <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.06)' }} />
+              <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', border: '1px solid rgba(var(--ink-rgb), 0.06)' }} />
               <button onClick={() => handleRemove(i)}
                 style={{ position: 'absolute', top: '-4px', right: '-4px', background: '#e53e3e', color: '#fff', border: 'none', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
                 <Trash2 size={10} />
@@ -50,7 +50,7 @@ export default function MultiImageUpload({ images, max = 5, folder, onUpload, on
       {images.length < max && (
         <label style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-          height: '48px', border: '1px dashed rgba(255,255,255,0.12)', cursor: 'pointer',
+          height: '48px', border: '1px dashed rgba(var(--ink-rgb), 0.12)', cursor: 'pointer',
           fontSize: '0.68rem', color: 'var(--color-text-muted)',
         }}>
           {uploading ? (

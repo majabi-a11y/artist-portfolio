@@ -30,6 +30,7 @@ export interface Artwork {
   isFeatured: boolean;
   price?: string; // montant en euros, sans symbole (ex. '2200')
   signature?: string; // ex. 'Signée au dos'
+  serie?: string; // série (planches du catalogue), voir SERIES
   status: 'available' | 'sold' | 'exhibition' | 'private';
   exhibition?: string;
   lieu?: string; // For fresques: location of the mural
@@ -148,6 +149,17 @@ export const formatPrice = (price: string) => {
 /** Publié sur le site (les brouillons importés du Drive restent dans l'admin). */
 export const isPublished = (item: { draft?: boolean }) => !item.draft;
 
+/**
+ * Séries d'Adrien, de la plus ancienne à la plus récente (planches du catalogue).
+ * Les textes viennent de lui (portfolio, journal) ; pas de texte inventé quand il n'en a pas écrit.
+ */
+export const SERIES: { id: string; titre: string; texte?: string }[] = [
+  { id: 'hors-ligne', titre: 'Hors ligne' },
+  { id: 'temps-libre', titre: 'Temps libre', texte: 'Ce temps libre si précieux : la flânerie d\'une balade en ville, les divagations de l\'esprit à la terrasse d\'un café.' },
+  { id: 'lignes-de-vies', titre: 'Lignes de vies', texte: 'Des éléments essentiels pour l\'artiste, comme la maison, l\'atelier ou l\'amour.' },
+  { id: 'on-dirait-le-sud', titre: 'On dirait le sud' },
+];
+
 export const CATALOGUE_PDF = '/catalogue-adrien-da-silva-2026.pdf';
 
 
@@ -184,7 +196,7 @@ export const defaultSiteData: SiteData = {
     ],
     stats: [],
     contact: [
-      { label: 'Atelier', value: 'Montpellier' },
+      { label: 'Atelier', value: 'Montpellier — sur rendez-vous' },
       { label: 'Email', value: 'adrien.enaer@gmail.com' },
       { label: 'Instagram', value: '@adrien_dasilva' },
       { label: 'WhatsApp', value: '+33 6 84 73 22 65' },
@@ -244,26 +256,26 @@ export const defaultSiteData: SiteData = {
   },
   artworks: [
     // ── Catalogue 2026 (dans l'ordre du catalogue) ──
-    { id: 'on-dirait-le-sud-116-x-89', title: 'On dirait le sud', year: 2026, technique: 'Acrylique sur toile', dimensions: '116 x 89 cm', signature: 'Signée au dos', price: '2200', description: '', images: [oeuvre('on-dirait-le-sud-116-x-89')], category: 'toile', isFeatured: true, status: 'available' },
-    { id: 'on-dirait-le-sud-146-x-97', title: 'On dirait le sud', year: 2026, technique: 'Acrylique sur toile', dimensions: '146 x 97 cm', signature: 'Signée au dos', price: '3000', description: '', images: [oeuvre('on-dirait-le-sud-146-x-97')], category: 'toile', isFeatured: true, status: 'available' },
-    { id: 'deconnecte', title: 'Déconnecté', year: 2024, technique: 'Acrylique sur toile', dimensions: '150 x 150 cm', signature: 'Signée au dos', price: '4600', description: 'La composition saisit un flux de travailleurs pris dans la mécanique du quotidien. Les silhouettes avancent, chargées de leurs obligations, tandis que l\'horizon appelle ailleurs. En creux, la ville retient ceux qui ne rêvent que de temps libre au bord de la mer.', images: [oeuvre('deconnecte')], category: 'toile', isFeatured: true, status: 'available' },
-    { id: 'temps-libre-3', title: 'Temps libre 3', year: 2024, technique: 'Acrylique sur toile', dimensions: '130 x 97 cm', signature: 'Signée au dos', price: '2700', description: '', images: [oeuvre('temps-libre-3')], category: 'toile', isFeatured: false, status: 'available' },
-    { id: 'vita-lenta', title: 'Vita lenta', year: 2025, technique: 'Acrylique sur toile', dimensions: '100 x 70 cm', signature: 'Signée au dos', price: '1600', description: '', images: [oeuvre('vita-lenta')], category: 'toile', isFeatured: false, status: 'available' },
-    { id: 'monotype-serie', title: 'Monotype série', year: 2025, technique: 'Collage sur toile', dimensions: '25 x 20 cm', signature: 'Signée au dos', price: '220', description: '', images: [oeuvre('monotype-serie')], category: 'toile', isFeatured: false, status: 'available' },
-    { id: 'hors-ligne-1-0', title: 'Hors ligne 1.0', year: 2024, technique: 'Acrylique sur toile', dimensions: '130 x 97 cm', signature: 'Signée au dos', price: '2700', description: '', images: [oeuvre('hors-ligne-1-0')], category: 'toile', isFeatured: false, status: 'available' },
-    { id: 'serigraphie-temps-libre', title: 'Sérigraphie Temps libre', year: 2025, technique: 'Sérigraphie, 6 passages couleurs', dimensions: '70 x 50 cm', signature: 'Signée et numérotée', price: '150', description: '', images: [oeuvre('serigraphie-temps-libre')], category: 'serigraphie', isFeatured: false, status: 'available' },
-    { id: 'hors-lignes-5', title: 'Hors lignes 5', year: 2024, technique: 'Acrylique sur papier', dimensions: '100 x 70 cm', signature: 'Signée au devant', price: '1600', description: '', images: [oeuvre('hors-lignes-5')], category: 'papier', isFeatured: false, status: 'available' },
-    { id: 'hors-ligne-1', title: 'Hors ligne 1', year: 2024, technique: 'Acrylique sur papier teinté', dimensions: '70 x 50 cm', signature: 'Signée au devant', price: '950', description: '', images: [oeuvre('hors-ligne-1')], category: 'papier', isFeatured: false, status: 'available' },
-    { id: 'hors-ligne-2', title: 'Hors ligne 2', year: 2024, technique: 'Acrylique sur papier teinté', dimensions: '70 x 50 cm', signature: 'Signée au devant', price: '950', description: '', images: [oeuvre('hors-ligne-2')], category: 'papier', isFeatured: false, status: 'available' },
-    { id: 'temps-libre-1-618', title: 'Temps libre 1.618', year: 2024, technique: 'Acrylique sur toile', dimensions: '150 x 100 cm', signature: 'Signée au dos', price: '3000', description: 'Composition en rectangle d\'or : paysage, nature, végétation. Le travail sur la trame et les lignes horizontales joue avec la perception de l\'espace et du volume. Cette composition graphique se lit de façon vibrante, entre abstraction et figuration.', images: [oeuvre('temps-libre-1-618')], category: 'toile', isFeatured: false, status: 'available' },
-    { id: 'hors-lignes-3', title: 'Hors lignes 3', year: 2024, technique: 'Acrylique et crayon sur papier', dimensions: '40 x 35 cm', signature: 'Signée au dos', price: '450', description: '', images: [oeuvre('hors-lignes-3')], category: 'papier', isFeatured: false, status: 'available' },
-    { id: 'temps-libre-voile', title: 'Temps libre voile', year: 2024, technique: 'Acrylique sur toile', dimensions: '70 x 50 cm', signature: 'Signée au dos', price: '950', description: '', images: [oeuvre('temps-libre-voile')], category: 'toile', isFeatured: false, status: 'available' },
-    { id: 'hors-lignes-1-0', title: 'Hors lignes 1.0', year: 2022, technique: 'Acrylique et crayon sur papier', dimensions: '70 x 50 cm', signature: 'Signée au devant', price: '950', description: '', images: [oeuvre('hors-lignes-1-0')], category: 'papier', isFeatured: false, status: 'available' },
-    { id: 'temps-libre-2-0', title: 'Temps libre 2.0', year: 2024, technique: 'Acrylique sur toile', dimensions: '130 x 97 cm', signature: 'Signée au dos', price: '2700', description: '', images: [oeuvre('temps-libre-2-0')], category: 'toile', isFeatured: false, status: 'available' },
-    { id: 'le-temps-libre', title: 'Le temps libre', year: 2024, technique: 'Acrylique sur toile', dimensions: '196 x 146 cm', signature: 'Signée au dos', price: '5200', description: 'Cette composition explore la densité des flux et des trajectoires quotidiennes dans les lieux de rencontre. Le trait souligne le rythme des passants dans un présent en mouvement et saisit la vitalité des échanges au cœur du tissu urbain.', images: [oeuvre('le-temps-libre')], category: 'toile', isFeatured: true, status: 'available' },
-    { id: 'lignes-de-vies-2', title: 'Lignes de vies 2', year: 2025, technique: 'Acrylique sur toile', dimensions: '100 x 81 cm', signature: 'Signée au dos', price: '1800', description: 'Lignes de vie est une série de toiles représentant des éléments essentiels pour l\'artiste, comme la maison, l\'atelier ou l\'amour.', images: [oeuvre('lignes-de-vies-2')], category: 'toile', isFeatured: false, status: 'available' },
+    { id: 'on-dirait-le-sud-116-x-89', serie: 'on-dirait-le-sud', title: 'On dirait le sud', year: 2026, technique: 'Acrylique sur toile', dimensions: '116 x 89 cm', signature: 'Signée au dos', price: '2200', description: '', images: [oeuvre('on-dirait-le-sud-116-x-89')], category: 'toile', isFeatured: true, status: 'available' },
+    { id: 'on-dirait-le-sud-146-x-97', serie: 'on-dirait-le-sud', title: 'On dirait le sud', year: 2026, technique: 'Acrylique sur toile', dimensions: '146 x 97 cm', signature: 'Signée au dos', price: '3000', description: '', images: [oeuvre('on-dirait-le-sud-146-x-97')], category: 'toile', isFeatured: true, status: 'available' },
+    { id: 'deconnecte', serie: 'on-dirait-le-sud', title: 'Déconnecté', year: 2024, technique: 'Acrylique sur toile', dimensions: '150 x 150 cm', signature: 'Signée au dos', price: '4600', description: 'La composition saisit un flux de travailleurs pris dans la mécanique du quotidien. Les silhouettes avancent, chargées de leurs obligations, tandis que l\'horizon appelle ailleurs. En creux, la ville retient ceux qui ne rêvent que de temps libre au bord de la mer.', images: [oeuvre('deconnecte')], category: 'toile', isFeatured: true, status: 'available' },
+    { id: 'temps-libre-3', serie: 'temps-libre', title: 'Temps libre 3', year: 2024, technique: 'Acrylique sur toile', dimensions: '130 x 97 cm', signature: 'Signée au dos', price: '2700', description: '', images: [oeuvre('temps-libre-3')], category: 'toile', isFeatured: false, status: 'available' },
+    { id: 'vita-lenta', serie: 'on-dirait-le-sud', title: 'Vita lenta', year: 2025, technique: 'Acrylique sur toile', dimensions: '100 x 70 cm', signature: 'Signée au dos', price: '1600', description: '', images: [oeuvre('vita-lenta')], category: 'toile', isFeatured: false, status: 'available' },
+    { id: 'monotype-serie', serie: 'on-dirait-le-sud', title: 'Monotype série', year: 2025, technique: 'Collage sur toile', dimensions: '25 x 20 cm', signature: 'Signée au dos', price: '220', description: '', images: [oeuvre('monotype-serie')], category: 'toile', isFeatured: false, status: 'available' },
+    { id: 'hors-ligne-1-0', serie: 'hors-ligne', title: 'Hors ligne 1.0', year: 2024, technique: 'Acrylique sur toile', dimensions: '130 x 97 cm', signature: 'Signée au dos', price: '2700', description: '', images: [oeuvre('hors-ligne-1-0')], category: 'toile', isFeatured: false, status: 'available' },
+    { id: 'serigraphie-temps-libre', serie: 'temps-libre', title: 'Sérigraphie Temps libre', year: 2025, technique: 'Sérigraphie, 6 passages couleurs', dimensions: '70 x 50 cm', signature: 'Signée et numérotée', price: '150', description: '', images: [oeuvre('serigraphie-temps-libre')], category: 'serigraphie', isFeatured: false, status: 'available' },
+    { id: 'hors-lignes-5', serie: 'hors-ligne', title: 'Hors lignes 5', year: 2024, technique: 'Acrylique sur papier', dimensions: '100 x 70 cm', signature: 'Signée au devant', price: '1600', description: '', images: [oeuvre('hors-lignes-5')], category: 'papier', isFeatured: false, status: 'available' },
+    { id: 'hors-ligne-1', serie: 'hors-ligne', title: 'Hors ligne 1', year: 2024, technique: 'Acrylique sur papier teinté', dimensions: '70 x 50 cm', signature: 'Signée au devant', price: '950', description: '', images: [oeuvre('hors-ligne-1')], category: 'papier', isFeatured: false, status: 'available' },
+    { id: 'hors-ligne-2', serie: 'hors-ligne', title: 'Hors ligne 2', year: 2024, technique: 'Acrylique sur papier teinté', dimensions: '70 x 50 cm', signature: 'Signée au devant', price: '950', description: '', images: [oeuvre('hors-ligne-2')], category: 'papier', isFeatured: false, status: 'available' },
+    { id: 'temps-libre-1-618', serie: 'temps-libre', title: 'Temps libre 1.618', year: 2024, technique: 'Acrylique sur toile', dimensions: '150 x 100 cm', signature: 'Signée au dos', price: '3000', description: 'Composition en rectangle d\'or : paysage, nature, végétation. Le travail sur la trame et les lignes horizontales joue avec la perception de l\'espace et du volume. Cette composition graphique se lit de façon vibrante, entre abstraction et figuration.', images: [oeuvre('temps-libre-1-618')], category: 'toile', isFeatured: false, status: 'available' },
+    { id: 'hors-lignes-3', serie: 'hors-ligne', title: 'Hors lignes 3', year: 2024, technique: 'Acrylique et crayon sur papier', dimensions: '40 x 35 cm', signature: 'Signée au dos', price: '450', description: '', images: [oeuvre('hors-lignes-3')], category: 'papier', isFeatured: false, status: 'available' },
+    { id: 'temps-libre-voile', serie: 'temps-libre', title: 'Temps libre voile', year: 2024, technique: 'Acrylique sur toile', dimensions: '70 x 50 cm', signature: 'Signée au dos', price: '950', description: '', images: [oeuvre('temps-libre-voile')], category: 'toile', isFeatured: false, status: 'available' },
+    { id: 'hors-lignes-1-0', serie: 'hors-ligne', title: 'Hors lignes 1.0', year: 2022, technique: 'Acrylique et crayon sur papier', dimensions: '70 x 50 cm', signature: 'Signée au devant', price: '950', description: '', images: [oeuvre('hors-lignes-1-0')], category: 'papier', isFeatured: false, status: 'available' },
+    { id: 'temps-libre-2-0', serie: 'temps-libre', title: 'Temps libre 2.0', year: 2024, technique: 'Acrylique sur toile', dimensions: '130 x 97 cm', signature: 'Signée au dos', price: '2700', description: '', images: [oeuvre('temps-libre-2-0')], category: 'toile', isFeatured: false, status: 'available' },
+    { id: 'le-temps-libre', serie: 'temps-libre', title: 'Le temps libre', year: 2024, technique: 'Acrylique sur toile', dimensions: '196 x 146 cm', signature: 'Signée au dos', price: '5200', description: 'Cette composition explore la densité des flux et des trajectoires quotidiennes dans les lieux de rencontre. Le trait souligne le rythme des passants dans un présent en mouvement et saisit la vitalité des échanges au cœur du tissu urbain.', images: [oeuvre('le-temps-libre')], category: 'toile', isFeatured: true, status: 'available' },
+    { id: 'lignes-de-vies-2', serie: 'lignes-de-vies', title: 'Lignes de vies 2', year: 2025, technique: 'Acrylique sur toile', dimensions: '100 x 81 cm', signature: 'Signée au dos', price: '1800', description: 'Lignes de vie est une série de toiles représentant des éléments essentiels pour l\'artiste, comme la maison, l\'atelier ou l\'amour.', images: [oeuvre('lignes-de-vies-2')], category: 'toile', isFeatured: false, status: 'available' },
     // Pastille rouge dans le catalogue d'Adrien : vendue.
-    { id: 'lignes-de-vies', title: 'Lignes de vies', year: 2025, technique: 'Acrylique sur toile', dimensions: '100 x 100 cm', signature: 'Signée au dos', price: '2000', description: 'Lignes de vie est une série de toiles représentant des éléments essentiels pour l\'artiste, comme la maison, l\'atelier ou l\'amour.', images: [oeuvre('lignes-de-vies')], category: 'toile', isFeatured: false, status: 'sold' },
+    { id: 'lignes-de-vies', serie: 'lignes-de-vies', title: 'Lignes de vies', year: 2025, technique: 'Acrylique sur toile', dimensions: '100 x 100 cm', signature: 'Signée au dos', price: '2000', description: 'Lignes de vie est une série de toiles représentant des éléments essentiels pour l\'artiste, comme la maison, l\'atelier ou l\'amour.', images: [oeuvre('lignes-de-vies')], category: 'toile', isFeatured: false, status: 'sold' },
 
     // ── Fresques (portfolio 2026) ──
     { id: 'plein-sud-saint-roch', title: 'Plein Sud — Saint Roch Social Club', year: 2022, technique: 'Fresque', dimensions: '1000 m²', lieu: 'Montpellier', description: 'Parasols, corps en mouvement, panorama figuratif et abstrait : l\'artiste joue sur les dimensions, les points de vue et les couleurs. Les traits se multiplient et l\'œil se pose naturellement sur les tons vifs et les contours vibrants. Cette fresque monumentale traite de l\'effervescence des lieux de passage et place la figure humaine au cœur d\'un récit abstrait, entièrement composé par la couleur.', images: fresque('plein-sud-saint-roch', 3), category: 'fresque', isFeatured: true, status: 'private' },
@@ -282,7 +294,7 @@ export const defaultSiteData: SiteData = {
       id: 'catalogue-2026',
       title: 'Le catalogue 2026 est en ligne',
       date: '2026-10-17',
-      content: 'Dix-neuf œuvres réunies dans un nouveau catalogue : les toiles « On dirait le sud » peintes cette année, les séries « Temps libre », « Hors ligne » et « Lignes de vies », des travaux sur papier, une sérigraphie six couleurs et une série de monotypes. Chaque œuvre est présentée seule, avec sa technique, son format et son prix. Toutes sont à voir dans la page Catalogue ; pour une acquisition ou une question, la page Contact est ouverte.',
+      content: 'Dix-neuf œuvres, des toiles « On dirait le sud » aux séries « Temps libre » et « Hors ligne ». À voir dans le catalogue.',
       images: ['/oeuvres/couverture-catalogue-2026.webp', oeuvre('on-dirait-le-sud-146-x-97'), oeuvre('on-dirait-le-sud-116-x-89')],
       category: 'studio',
       link: CATALOGUE_PDF,
@@ -309,34 +321,34 @@ export const defaultSiteData: SiteData = {
   press: [],
   portfolio: [],
   theme: {
-    bgColor: '#0d0b14', // encre violette (aubergine / bleu nuit de ses toiles)
-    paletteId: 'soleil',
+    bgColor: '#f4f1ea', // papier ; texte à l'encre outremer (piste D)
+    paletteId: 'outremer',
   },
   homeNav: [
-    { direction: 'bio', label: 'Adrien Da Silva', subtitle: 'Peintre et muraliste — Montpellier', route: '/profile', image: '/atelier/adrien-au-travail.webp', textColor: '#f4efe9' },
-    { direction: 'up', label: 'Catalogue', subtitle: '19 œuvres · 2026', route: '/catalogue', image: oeuvre('on-dirait-le-sud-146-x-97'), textColor: '#f4efe9' },
-    { direction: 'right', label: 'Fresques', subtitle: 'Œuvres murales', route: '/fresques', image: '/fresques/raconte-moi-carnon-1.webp', textColor: '#f4efe9' },
-    { direction: 'center', label: 'Journal', subtitle: 'Actualités et expositions', route: '/journal', image: oeuvre('le-temps-libre'), textColor: '#f4efe9' },
-    { direction: 'center', label: 'Filtre', subtitle: 'Votre photo en lignes', route: '/filter', image: oeuvre('temps-libre-2-0'), textColor: '#f4efe9' },
-    { direction: 'down', label: 'Contact', subtitle: 'Écrire à l\'artiste', route: '/contact', image: oeuvre('lignes-de-vies'), textColor: '#f4efe9' },
+    { direction: 'bio', label: 'Adrien Da Silva', subtitle: 'Peintre et muraliste — Montpellier', route: '/profile', image: '/atelier/adrien-au-travail.webp', textColor: '#1d1aa8' },
+    { direction: 'up', label: 'Catalogue', subtitle: '19 œuvres · 2026', route: '/catalogue', image: oeuvre('on-dirait-le-sud-146-x-97'), textColor: '#1d1aa8' },
+    { direction: 'right', label: 'Fresques', subtitle: 'Œuvres murales', route: '/fresques', image: '/fresques/raconte-moi-carnon-1.webp', textColor: '#1d1aa8' },
+    { direction: 'center', label: 'Journal', subtitle: 'Actualités et expositions', route: '/journal', image: oeuvre('le-temps-libre'), textColor: '#1d1aa8' },
+    { direction: 'center', label: 'Filtre', subtitle: 'Votre photo en lignes', route: '/filter', image: oeuvre('temps-libre-2-0'), textColor: '#1d1aa8' },
+    { direction: 'down', label: 'Contact', subtitle: 'Écrire à l\'artiste', route: '/contact', image: oeuvre('lignes-de-vies'), textColor: '#1d1aa8' },
   ],
   menuConfig: {
     items: [
-      { label: 'Accueil', route: '/', textColor: '#f4efe9' },
-      { label: 'Catalogue', route: '/catalogue', textColor: '#f4efe9' },
-      { label: 'Fresques', route: '/fresques', textColor: '#f4efe9' },
-      { label: 'Journal', route: '/journal', textColor: '#f4efe9' },
-      { label: 'Filtre', route: '/filter', textColor: '#f4efe9' },
-      { label: 'Contact', route: '/contact', textColor: '#f4efe9' },
+      { label: 'Accueil', route: '/', textColor: '#1d1aa8' },
+      { label: 'Catalogue', route: '/catalogue', textColor: '#1d1aa8' },
+      { label: 'Fresques', route: '/fresques', textColor: '#1d1aa8' },
+      { label: 'Journal', route: '/journal', textColor: '#1d1aa8' },
+      { label: 'Filtre', route: '/filter', textColor: '#1d1aa8' },
+      { label: 'Contact', route: '/contact', textColor: '#1d1aa8' },
     ],
-    lineColor: '#ff5c9d',
+    lineColor: '#1d1aa8',
     lineThickness: 4,
     lines: [
-      { color: '#ff5c9d', thickness: 4, offsetX: 10, width: 35 },
-      { color: '#ff5c9d', thickness: 4, offsetX: 45, width: 30 },
-      { color: '#ff5c9d', thickness: 4, offsetX: 15, width: 40 },
-      { color: '#ff5c9d', thickness: 4, offsetX: 50, width: 25 },
-      { color: '#ff5c9d', thickness: 4, offsetX: 20, width: 35 },
+      { color: '#1d1aa8', thickness: 4, offsetX: 10, width: 35 },
+      { color: '#1d1aa8', thickness: 4, offsetX: 45, width: 30 },
+      { color: '#1d1aa8', thickness: 4, offsetX: 15, width: 40 },
+      { color: '#1d1aa8', thickness: 4, offsetX: 50, width: 25 },
+      { color: '#1d1aa8', thickness: 4, offsetX: 20, width: 35 },
     ],
   },
   contactEmail: 'adrien.enaer@gmail.com',
