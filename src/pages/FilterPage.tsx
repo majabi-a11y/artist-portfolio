@@ -172,33 +172,23 @@ export default function FilterPage() {
               </div>
 
               <div className="filter-control-group">
-                <div className="filter-control-label"><span>Nombre de lignes</span><span>{options.lines}</span></div>
+                <div className="filter-control-label"><span>Détail</span><span>{options.lines} lignes</span></div>
                 <input className="filter-slider" type="range" min="40" max="160" step="2" value={options.lines}
                   onChange={(e) => update('lines', parseInt(e.target.value))} id="slider-lines" />
               </div>
 
               <div className="filter-control-group">
-                <div className="filter-control-label"><span>Épaisseur des tirets</span><span>{Math.round(options.weight * 100)} %</span></div>
-                <input className="filter-slider" type="range" min="30" max="100" value={Math.round(options.weight * 100)}
-                  onChange={(e) => update('weight', parseInt(e.target.value) / 100)} id="slider-weight" />
-              </div>
-
-              <div className="filter-control-group">
-                <div className="filter-control-label"><span>Lumière</span><span>{Math.round(options.threshold * 100)}</span></div>
-                <input className="filter-slider" type="range" min="15" max="75" value={Math.round(options.threshold * 100)}
-                  onChange={(e) => update('threshold', parseInt(e.target.value) / 100)} id="slider-light" />
-                <p className="filter-control-hint">Plus haut : plus de surfaces laissées vides.</p>
-              </div>
-
-              <div className="filter-control-group">
-                <div className="filter-control-label"><span>Longueur des tirets</span><span>{options.dash}</span></div>
-                <input className="filter-slider" type="range" min="2" max="30" value={options.dash}
-                  onChange={(e) => update('dash', parseInt(e.target.value))} id="slider-dash" />
+                <div className="filter-control-label">
+                  <span>Lumière</span>
+                  <span>{options.light === 0 ? 'auto' : options.light > 0 ? `+${Math.round(options.light * 10)}` : Math.round(options.light * 10)}</span>
+                </div>
+                <input className="filter-slider" type="range" min="-10" max="10" value={Math.round(options.light * 10)}
+                  onChange={(e) => update('light', parseInt(e.target.value) / 10)} id="slider-light" />
+                <p className="filter-control-hint">Réglée automatiquement pour chaque photo. Vers la droite : plus de vide, vers la gauche : plus d'encre.</p>
               </div>
 
               <div className="filter-control-group filter-switches">
-                <label><input type="checkbox" checked={options.trame} onChange={(e) => update('trame', e.target.checked)} /> Trame fine dans les clairs</label>
-                <label><input type="checkbox" checked={options.accent} onChange={(e) => update('accent', e.target.checked)} /> Touches fluo</label>
+                <label><input type="checkbox" checked={options.accent} onChange={(e) => update('accent', e.target.checked)} /> Touches fluo sur les roses et les orangés</label>
               </div>
             </div>
           </div>
