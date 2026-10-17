@@ -2410,3 +2410,71 @@ textarea.admin-input {
 .filter-preset img { width: 100%; height: 76px; object-fit: cover; margin-bottom: 4px; }
 .filter-preset strong { font-size: 0.72rem; font-weight: 500; color: var(--color-white); }
 .filter-preset small { font-size: 0.58rem; color: var(--color-text-muted); }
+
+/* ========== ACCUEIL : comme une page de son catalogue ========== */
+.carousel-1d-slide {
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: calc(var(--header-height) + 18px) 28px 0;
+}
+.home-plate {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.home-plate-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  transition: transform 6s ease, opacity 0.6s ease;
+  transform: scale(0.985);
+}
+.carousel-1d-active .home-plate-img { transform: scale(1); }
+.home-caption {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 22px 0 76px;
+  text-align: center;
+}
+.home-caption-title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.75rem;
+  line-height: 1.1;
+  color: var(--color-white);
+}
+.home-caption-sub {
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.home-caption-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 0.64rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+.home-folio {
+  position: absolute;
+  right: 28px;
+  bottom: calc(26px + env(safe-area-inset-bottom));
+  z-index: 3;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  color: var(--color-text-muted);
+}
+.spatial-home .carousel-1d-dots { left: 28px; right: auto; transform: none; bottom: calc(30px + env(safe-area-inset-bottom)); }

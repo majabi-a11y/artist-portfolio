@@ -2,7 +2,7 @@ import { useRef, useCallback, useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSiteData } from '../contexts/SiteDataContext';
 import { useIsPWA } from '../components/BottomNav';
-import { Download, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -141,8 +141,6 @@ export default function HomePage() {
           const slide = slides[idx];
           if (!slide) return null;
           const offset = pos - 1;
-          const tc = slide.textColor || '#f2ede8';
-          const isFilterWebOnly = slide.pwaOnly && !isPWA;
 
           return (
             <div
@@ -154,38 +152,17 @@ export default function HomePage() {
               }}
               onClick={() => offset === 0 ? handleClick(idx) : moveTo(idx)}
             >
-              {slide.image && (
-                <img src={slide.image} alt="" className="spatial-card-bg" />
-              )}
-
-              {isFilterWebOnly ? (
-                <div className="spatial-card-content" style={{ textAlign: 'center', alignItems: 'center' }}>
-                  <span className="spatial-card-label" style={{ color: tc }}>{slide.label}</span>
-                  <span className="spatial-card-subtitle" style={{ color: tc, opacity: 0.6 }}>{slide.subtitle}</span>
-                  <button className="btn btn-outline" style={{
-                    marginTop: '24px', fontSize: '0.72rem', padding: '10px 20px',
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                    color: tc, borderColor: `${tc}33`,
-                  }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (deferredPrompt) deferredPrompt.prompt();
-                      else alert('Installez l\'application pour accéder au filtre artistique.');
-                    }}>
-                    <Download size={14} /> Installer l'app
-                  </button>
-                </div>
-              ) : (
-                <div className="spatial-card-content">
-                  <span className="spatial-card-label" style={{ color: tc }}>{slide.label}</span>
-                  <span className="spatial-card-subtitle" style={{ color: tc, opacity: 0.6 }}>{slide.subtitle}</span>
-                  {slide.route && slide.route !== '/' && offset === 0 && (
-                    <span className="slide-cta" style={{ color: tc }}>
-                      Découvrir <ArrowRight size={14} />
-                    </span>
-                  )}
-                </div>
-              )}
+              {/* Comme une page de son catalogue : l'œuvre entière au centre, la légende dessous */}
+              <div className="home-plate">
+                {slide.image && <img src={slide.image} alt="" className="home-plate-img" />}
+              </div>
+              <div className="home-caption">
+                <span className="home-caption-title">{slide.label}</span>
+                <span className="home-caption-sub">{slide.subtitle}</span>
+                {slide.route && slide.route !== '/' && offset === 0 && (
+                  <span className="home-caption-cta">Découvrir <ArrowRight size={13} /></span>
+                )}
+              </div>
             </div>
           );
         })}
@@ -198,14 +175,7 @@ export default function HomePage() {
         ))}
       </div>
 
-      <div className="carousel-1d-hints">
-        <span className="carousel-1d-hint">
-          {slides[prevIdx]?.label} ←
-        </span>
-        <span className="carousel-1d-hint">
-          → {slides[nextIdx]?.label}
-        </span>
-      </div>
+      <span className="home-folio">{String(current + 1).padStart(2, '0')} / {String(N).padStart(2, '0')}</span>
     </div>
   );
 }

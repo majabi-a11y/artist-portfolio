@@ -313,12 +313,12 @@ export const defaultSiteData: SiteData = {
     paletteId: 'soleil',
   },
   homeNav: [
-    { direction: 'bio', label: 'Adrien Da Silva', subtitle: 'Artiste peintre et muraliste — Montpellier', route: '/profile', image: '/atelier/adrien-au-travail.webp', textColor: '#f4efe9' },
-    { direction: 'up', label: 'Catalogue', subtitle: 'Œuvres 2026', route: '/catalogue', image: oeuvre('on-dirait-le-sud-146-x-97'), textColor: '#f4efe9' },
-    { direction: 'right', label: 'Fresques', subtitle: 'Œuvres murales', route: '/fresques', image: '/fresques/granholat-1.webp', textColor: '#f4efe9' },
-    { direction: 'center', label: 'Journal', subtitle: 'Actualités', route: '/journal', image: '/oeuvres/couverture-catalogue-2026.webp', textColor: '#f4efe9' },
-    { direction: 'center', label: 'Filtre', subtitle: 'Votre photo en lignes', route: '/filter', image: '/oeuvres/hors-ligne-2.webp', textColor: '#f4efe9' },
-    { direction: 'down', label: 'Contact', subtitle: 'Écrire à l\'artiste', route: '/contact', image: '/fresques/raconte-moi-carnon-1.webp', textColor: '#f4efe9' },
+    { direction: 'bio', label: 'Adrien Da Silva', subtitle: 'Peintre et muraliste — Montpellier', route: '/profile', image: '/atelier/adrien-au-travail.webp', textColor: '#f4efe9' },
+    { direction: 'up', label: 'Catalogue', subtitle: '19 œuvres · 2026', route: '/catalogue', image: oeuvre('on-dirait-le-sud-146-x-97'), textColor: '#f4efe9' },
+    { direction: 'right', label: 'Fresques', subtitle: 'Œuvres murales', route: '/fresques', image: '/fresques/raconte-moi-carnon-1.webp', textColor: '#f4efe9' },
+    { direction: 'center', label: 'Journal', subtitle: 'Actualités et expositions', route: '/journal', image: oeuvre('le-temps-libre'), textColor: '#f4efe9' },
+    { direction: 'center', label: 'Filtre', subtitle: 'Votre photo en lignes', route: '/filter', image: oeuvre('temps-libre-2-0'), textColor: '#f4efe9' },
+    { direction: 'down', label: 'Contact', subtitle: 'Écrire à l\'artiste', route: '/contact', image: oeuvre('lignes-de-vies'), textColor: '#f4efe9' },
   ],
   menuConfig: {
     items: [
