@@ -1,4 +1,4 @@
-import { sendEmail, subscribe, contactTo, confirmationEmail, messageToArtist } from './_mail';
+import { sendEmail, subscribe, contactTo, confirmationEmail, messageToArtist, mailReady } from './_mail.js';
 
 /** Formulaire de contact (envoyé depuis le Gmail d'Adrien) : message à Adrien + confirmation au visiteur (+ inscription s'il l'a demandée). */
 export async function POST(request: Request): Promise<Response> {
@@ -15,6 +15,8 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const subscribed = wantsInvites ? await subscribe(email, name, 'contact') : false;
+    // Gmail pas encore branché : le site ouvre la messagerie du visiteur à la place
+    if (!mailReady()) return json(503, 'Envoi direct pas encore activé', { subscribed });
     await sendEmail({ email: contactTo(), name: 'Adrien Da Silva' }, `Site — ${subject} — ${name}`,
       messageToArtist({ name, email, subject, message, subscribed }), { email, name });
     await sendEmail({ email, name }, 'Votre message est bien arrivé', confirmationEmail(name, subject, message, subscribed));

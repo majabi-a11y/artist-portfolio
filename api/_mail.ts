@@ -47,6 +47,9 @@ export async function subscribe(email: string, name?: string, source: 'site' | '
 
 export const contactTo = () => env('CONTACT_TO');
 
+/** Le Gmail d'Adrien est-il branché ? (sans mot de passe d'application : pas d'envoi, le reste marche) */
+export const mailReady = () => Boolean(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD && process.env.CONTACT_TO);
+
 // ── Gabarits d'e-mails (HTML simple, lisible partout) ──
 
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
