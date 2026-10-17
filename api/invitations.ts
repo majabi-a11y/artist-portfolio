@@ -9,7 +9,8 @@ export async function POST(request: Request): Promise<Response> {
   const name = String(body.name ?? '').trim().slice(0, 120) || undefined;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json(400);
   try {
-    await subscribe(email, name, 'site');
+    const source = body.source === 'google' ? 'google' : 'site';
+    await subscribe(email, name, source);
     // L'e-mail de bienvenue est un plus : son échec ne doit pas annuler l'inscription
     if (mailReady()) {
       await sendEmail({ email, name }, 'Vous êtes sur la liste des invités', welcomeEmail(name))

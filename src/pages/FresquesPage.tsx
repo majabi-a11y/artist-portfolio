@@ -5,6 +5,7 @@ import { MapPin } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import ImageCarousel from '../components/ImageCarousel';
 import { isPublished } from '../data/defaultData';
+import { recordView } from '../lib/taste';
 
 export default function FresquesPage() {
   const { data } = useSiteData();
@@ -26,7 +27,7 @@ export default function FresquesPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {fresques.map(fresque => (
               <div key={fresque.id} className="card" style={{ overflow: 'hidden', cursor: 'pointer' }}
-                onClick={() => setSelectedId(fresque.id)}>
+                onClick={() => { setSelectedId(fresque.id); recordView(fresque.id); }}>
                 {fresque.images?.length > 0 && (
                   <ImageCarousel images={fresque.images} alt={fresque.title} height="260px" />
                 )}

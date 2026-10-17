@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Send, Loader2, Copy, Check } from 'lucide-react';
 import InviteCard from './InviteCard';
+import { signInVisitor, signOutVisitor, useVisitor } from '../lib/visitor';
 
 export type ContactSubject =
   | { type: 'buy'; artworkTitle: string }
@@ -39,6 +40,12 @@ export default function ContactForm({ preset, contactEmail }: Props) {
 
   const subjectLabel = SUBJECT_OPTIONS.find(o => o.value === subject)?.label || 'Contact';
   const fullMessage = `Nom: ${name}\nEmail: ${email}\nObjet: ${subjectLabel}\n\n${details}`;
+
+  // Visiteur connecté avec Google : nom et e-mail viennent de son compte
+  const user = useVisitor();
+  useEffect(() => {
+    if (user?.email) { setEmail(user.email); setName(n => n || user.displayName || ''); }
+  }, [user]);
 
   const [sending, setSending] = useState(false);
   const [delivered, setDelivered] = useState(false);
@@ -149,6 +156,22 @@ export default function ContactForm({ preset, contactEmail }: Props) {
         </select>
       </div>
 
+      {user?.email ? (
+        <div className="contact-identity">
+          {user.photoURL && <img src={user.photoURL} alt="" referrerPolicy="no-referrer" />}
+          <span>
+            <strong>{user.displayName || user.email}</strong>
+            <small>{user.email}</small>
+          </span>
+          <button type="button" onClick={() => { signOutVisitor(); setEmail(''); setName(''); }}>Changer</button>
+        </div>
+      ) : (
+        <button type="button" className="contact-google" onClick={() => signInVisitor().catch(() => {})}>
+          Remplir avec mon compte Google
+        </button>
+      )}
+
+      {!user?.email && <>
       <div className="contact-form-field">
         <label className="contact-form-label">Nom</label>
         <input type="text" value={name} onChange={e => setName(e.target.value)}
@@ -160,6 +183,7 @@ export default function ContactForm({ preset, contactEmail }: Props) {
         <input type="email" value={email} onChange={e => setEmail(e.target.value)}
           className="contact-form-input" placeholder="votre@email.com" required />
       </div>
+      </>}
 
       <div className="contact-form-field">
         <label className="contact-form-label">Message</label>

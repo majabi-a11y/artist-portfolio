@@ -3,7 +3,8 @@ import { useSiteData } from '../contexts/SiteDataContext';
 import { formatPrice, isPublished } from '../data/defaultData';
 import { ArrowLeft, Share2, MapPin } from 'lucide-react';
 import ImageViewer from '../components/ImageViewer';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { recordView } from '../lib/taste';
 
 export default function ArtworkDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -11,6 +12,14 @@ export default function ArtworkDetailPage() {
   const { data } = useSiteData();
   const artwork = data.artworks.find((a) => a.id === id && isPublished(a));
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+
+  // Goût du visiteur : une visite, puis +1 toutes les 15 s passées sur l'œuvre (reste dans son navigateur)
+  useEffect(() => {
+    if (!artwork) return;
+    recordView(artwork.id);
+    const t = setInterval(() => recordView(artwork.id), 15000);
+    return () => clearInterval(t);
+  }, [artwork?.id]);
 
   if (!artwork) {
     return (

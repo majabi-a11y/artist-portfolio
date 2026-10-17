@@ -35,7 +35,7 @@ export async function sendEmail(to: { email: string; name?: string }, subject: s
 }
 
 /** Ajoute (ou met à jour) un invité. */
-export async function subscribe(email: string, name?: string, source: 'site' | 'contact' = 'site'): Promise<boolean> {
+export async function subscribe(email: string, name?: string, source: 'site' | 'contact' | 'google' = 'site'): Promise<boolean> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/adrien_da_silva_inscrire`, {
     method: 'POST',
     headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`, 'content-type': 'application/json' },

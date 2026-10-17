@@ -350,7 +350,7 @@ p {
   height: 4px;
   border-radius: 99px;
   background: var(--color-accent);
-  opacity: 0.35;
+  opacity: 0.75;
 }
 
 /* ========== IMAGE VIEWER (fullscreen) ========== */
@@ -2280,3 +2280,75 @@ textarea.admin-input {
 .invites-list small { color: var(--color-text-muted); white-space: nowrap; }
 /* Vendue : la pastille rouge suffit, le texte reste discret (pas de rose à côté du rouge) */
 .gallery-price.is-sold, .detail-price.is-sold { color: var(--color-text-secondary); }
+
+/* Menu : couleurs de la toile préférée du visiteur */
+.menu-taste {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: calc(28px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.64rem;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+.menu-taste-chips { display: inline-flex; gap: 3px; flex-shrink: 0; }
+.menu-taste-chips i { width: 14px; height: 5px; border-radius: 3px; }
+
+/* Inscription : Google d'abord, e-mail en repli */
+.invite-join { display: flex; flex-direction: column; gap: 10px; }
+.invite-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 0.8rem;
+  color: #1a1a1a;
+  background: #fff;
+  border: 1px solid #d8d2cb;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+.invite-google:hover { border-color: var(--color-outremer); }
+.invite-google:disabled { opacity: 0.6; }
+.invite-alt {
+  align-self: center;
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 0.7rem;
+  color: #6f6660;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* Formulaire : identité Google */
+.contact-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.contact-identity img { width: 34px; height: 34px; border-radius: 50%; }
+.contact-identity span { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.contact-identity strong { font-size: 0.8rem; font-weight: 500; }
+.contact-identity small { font-size: 0.66rem; color: var(--color-text-muted); overflow: hidden; text-overflow: ellipsis; }
+.contact-identity button, .contact-google {
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 0.68rem;
+  color: var(--color-accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.contact-google { display: block; margin: 0 0 14px; padding: 0; }

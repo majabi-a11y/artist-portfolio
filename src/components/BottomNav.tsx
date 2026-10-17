@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { favouriteArtwork, artworkPalette } from '../lib/taste';
 import { useSiteData } from '../contexts/SiteDataContext';
 import { Menu, X } from 'lucide-react';
 
@@ -57,6 +58,19 @@ export default function BottomNav() {
     return items;
   }, [data.homeNav, data.menuConfig, isPWA]);
 
+  // Couleurs de la toile que ce visiteur a le plus regardée (sinon, celles réglées dans l'admin)
+  const [taste, setTaste] = useState<{ title: string; colours: string[] } | null>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const fav = favouriteArtwork(data.artworks);
+    if (!fav) { setTaste(null); return; }
+    let alive = true;
+    artworkPalette(fav.images[0])
+      .then(colours => { if (alive) setTaste(colours.length ? { title: fav.title.trim(), colours } : null); })
+      .catch(() => alive && setTaste(null));
+    return () => { alive = false; };
+  }, [isOpen, data.artworks]);
+
   const lineConfig = useMemo(() => {
     const cfg = data.menuConfig || { items: [], lineColor: '#ff5c9d', lineThickness: 4 };
     return { color: cfg.lineColor || '#ff5c9d', thickness: cfg.lineThickness || 4 };
@@ -94,7 +108,7 @@ export default function BottomNav() {
             const cfg = data.menuConfig || { items: [], lines: [], lineColor: '#ff5c9d', lineThickness: 4 };
             const lineIdx = i - 1;
             const lineCfg = cfg.lines?.[lineIdx];
-            const lColor = lineCfg?.color || cfg.lineColor || '#ff5c9d';
+            const lColor = taste ? taste.colours[lineIdx % taste.colours.length] : (lineCfg?.color || cfg.lineColor || '#ff5c9d');
             const lThick = lineCfg?.thickness || cfg.lineThickness || 4;
             const lOffset = lineCfg?.offsetX ?? 10;
             const lWidth = lineCfg?.width ?? 30;
@@ -107,6 +121,7 @@ export default function BottomNav() {
                       width: `${lWidth}%`,
                       height: `${lThick}px`,
                       background: lColor,
+                      transition: 'background 0.6s ease',
                     }} />
                   </div>
                 )}
@@ -126,6 +141,12 @@ export default function BottomNav() {
           })}
         </nav>
 
+        {taste && (
+          <p className="menu-taste">
+            <span className="menu-taste-chips">{taste.colours.map(c => <i key={c} style={{ background: c }} />)}</span>
+            Aux couleurs de « {taste.title} », l'œuvre que vous regardez le plus
+          </p>
+        )}
       </div>
     </>
   );
