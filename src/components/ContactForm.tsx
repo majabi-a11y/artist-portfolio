@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Send, Loader2, Copy, Check } from 'lucide-react';
+import InviteCard from './InviteCard';
 
 export type ContactSubject =
   | { type: 'buy'; artworkTitle: string }
@@ -39,12 +40,34 @@ export default function ContactForm({ preset, contactEmail }: Props) {
   const subjectLabel = SUBJECT_OPTIONS.find(o => o.value === subject)?.label || 'Contact';
   const fullMessage = `Nom: ${name}\nEmail: ${email}\nObjet: ${subjectLabel}\n\n${details}`;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [sending, setSending] = useState(false);
+  const [delivered, setDelivered] = useState(false);
+  const [botcheck, setBotcheck] = useState(false); // champ piège invisible : coché = robot
+  const [invitations, setInvitations] = useState(false); // consentement explicite, jamais coché d'office
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !details) { setError('Veuillez remplir tous les champs.'); return; }
     setError('');
 
-    // Try mailto
+    // Envoi par le serveur du site : message à Adrien + e-mail de confirmation au visiteur
+    setSending(true);
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name, email, subject: subjectLabel, message: details, invitations, botcheck }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (res.ok && json.ok) { setSubscribed(Boolean(json.subscribed)); setDelivered(true); return; }
+    } catch {
+      // réseau coupé : repli ci-dessous
+    } finally {
+      setSending(false);
+    }
+
+    // Repli : ouvrir la messagerie du visiteur
     const mailtoUrl = `mailto:${contactEmail}?subject=${encodeURIComponent(subjectLabel)}&body=${encodeURIComponent(fullMessage)}`;
     window.open(mailtoUrl, '_blank');
 
@@ -71,6 +94,21 @@ export default function ContactForm({ preset, contactEmail }: Props) {
       setTimeout(() => setCopied(false), 3000);
     }
   };
+
+  if (delivered) {
+    return (
+      <div className="contact-delivered">
+        <div className="contact-delivered-head">
+          <span className="contact-delivered-check"><Check size={18} /></span>
+          <div>
+            <p className="contact-delivered-title">Message envoyé</p>
+            <p className="contact-delivered-text">Un e-mail de confirmation vous attend à {email}. Adrien vous répond personnellement.</p>
+          </div>
+        </div>
+        <InviteCard subscribed={subscribed} withEmail={!subscribed} compact />
+      </div>
+    );
+  }
 
   if (sent) {
     return (
@@ -132,8 +170,19 @@ export default function ContactForm({ preset, contactEmail }: Props) {
 
       {error && <p style={{ fontSize: '0.72rem', color: '#e53e3e', marginBottom: '10px' }}>{error}</p>}
 
-      <button type="submit" className="btn btn-primary btn-block" style={{ marginTop: '8px' }}>
-        <Send size={14} /> Envoyer
+      <label className="contact-optin">
+        <input type="checkbox" checked={invitations} onChange={e => setInvitations(e.target.checked)} />
+        <span>
+          <strong>M'inviter aux prochaines expos</strong>
+          <small>Vernissages et nouvelles œuvres en avant-première. Désinscription en un clic.</small>
+        </span>
+      </label>
+
+      <input type="checkbox" name="botcheck" checked={botcheck} onChange={e => setBotcheck(e.target.checked)}
+        tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ display: 'none' }} />
+
+      <button type="submit" className="btn btn-primary btn-block" style={{ marginTop: '8px' }} disabled={sending}>
+        {sending ? <><Loader2 size={14} className="spin" /> Envoi…</> : <><Send size={14} /> Envoyer</>}
       </button>
     </form>
   );

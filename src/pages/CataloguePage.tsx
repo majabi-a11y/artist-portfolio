@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSiteData } from '../contexts/SiteDataContext';
 import type { Artwork } from '../data/defaultData';
-import { thumb, formatPrice, CATALOGUE_PDF } from '../data/defaultData';
+import { thumb, formatPrice, CATALOGUE_PDF, isPublished } from '../data/defaultData';
 import BackButton from '../components/BackButton';
 import { Search, Download } from 'lucide-react';
 
@@ -20,7 +20,7 @@ export default function CataloguePage() {
   const [activeCategory, setActiveCategory] = useState('Tout');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const storeArtworks = useMemo(() => data.artworks.filter(a => a.category !== 'fresque'), [data.artworks]);
+  const storeArtworks = useMemo(() => data.artworks.filter(a => a.category !== 'fresque' && isPublished(a)), [data.artworks]);
 
   // Seules les catégories présentes au catalogue deviennent des filtres.
   const categories = useMemo(() => {

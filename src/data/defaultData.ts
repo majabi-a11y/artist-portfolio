@@ -33,6 +33,8 @@ export interface Artwork {
   status: 'available' | 'sold' | 'exhibition' | 'private';
   exhibition?: string;
   lieu?: string; // For fresques: location of the mural
+  draft?: boolean; // brouillon (import Drive) : invisible sur le site tant qu'il n'est pas complété
+  driveFolderId?: string; // dossier (ou fichier) Drive d'origine
 }
 
 export interface NewsPost {
@@ -43,6 +45,8 @@ export interface NewsPost {
   images: string[]; // Multi-image support
   category: 'exhibition' | 'press' | 'event' | 'studio';
   link?: string; // lien affiché sous le texte (ex. PDF du catalogue)
+  draft?: boolean;
+  driveFolderId?: string;
   linkLabel?: string;
 }
 
@@ -117,6 +121,8 @@ export interface SiteData {
   contactEmail: string; // Email address for contact form submissions
   whatsapp?: string; // numéro international sans « + » ni espaces (ex. 33684732265)
   contentVersion?: number; // voir CONTENT_VERSION
+  driveFolderUrl?: string; // dossier Drive partagé d'où viennent les nouvelles photos
+  driveImported?: string[]; // identifiants des fichiers Drive déjà importés
 }
 
 /**
@@ -139,7 +145,11 @@ export const formatPrice = (price: string) => {
   return Number.isFinite(n) ? `${n.toLocaleString('fr-FR')} €` : price;
 };
 
+/** Publié sur le site (les brouillons importés du Drive restent dans l'admin). */
+export const isPublished = (item: { draft?: boolean }) => !item.draft;
+
 export const CATALOGUE_PDF = '/catalogue-adrien-da-silva-2026.pdf';
+
 
 /** Lien WhatsApp direct, avec un message prérempli. */
 export const whatsappLink = (number: string, text?: string) =>

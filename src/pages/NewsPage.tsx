@@ -1,10 +1,12 @@
 import { useSiteData } from '../contexts/SiteDataContext';
 import BackButton from '../components/BackButton';
 import ImageCarousel from '../components/ImageCarousel';
+import { isPublished } from '../data/defaultData';
+import InviteCard from '../components/InviteCard';
 
 export default function NewsPage() {
   const { data } = useSiteData();
-  const news = data.news || [];
+  const news = (data.news || []).filter(isPublished);
 
   const formatDate = (d: string) => {
     if (/^\d{4}$/.test(d.trim())) return d.trim(); // année seule
@@ -24,6 +26,10 @@ export default function NewsPage() {
         <p className="page-subtitle" style={{ marginBottom: '32px' }}>
           Actualités & nouveautés
         </p>
+
+        <div style={{ marginBottom: '28px' }}>
+          <InviteCard compact />
+        </div>
 
         {news.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

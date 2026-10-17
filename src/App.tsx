@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect, lazy, Suspense } from 'react';
 import { SiteDataProvider, useSiteData } from './contexts/SiteDataContext';
 import BottomNav from './components/BottomNav';
+import WelcomeSheet from './components/WelcomeSheet';
 
 // Lazy-loaded pages for better initial load performance
 const HomePage = lazy(() => import('./pages/HomePage'));
@@ -149,6 +150,7 @@ function App() {
           </Routes>
         </Suspense>
         <BottomNav />
+        <WelcomeSheet />
       </BrowserRouter>
     </SiteDataProvider>
   );

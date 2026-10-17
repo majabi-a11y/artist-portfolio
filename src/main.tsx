@@ -1,3 +1,4 @@
+import './lib/invite'; // capte l'invitation à installer l'app dès le chargement
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'

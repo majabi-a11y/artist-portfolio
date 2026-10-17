@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSiteData } from '../contexts/SiteDataContext';
-import { formatPrice } from '../data/defaultData';
+import { formatPrice, isPublished } from '../data/defaultData';
 import { ArrowLeft, Share2, MapPin } from 'lucide-react';
 import ImageViewer from '../components/ImageViewer';
 import { useState } from 'react';
@@ -9,7 +9,7 @@ export default function ArtworkDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data } = useSiteData();
-  const artwork = data.artworks.find((a) => a.id === id);
+  const artwork = data.artworks.find((a) => a.id === id && isPublished(a));
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
   if (!artwork) {

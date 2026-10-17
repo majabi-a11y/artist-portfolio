@@ -11,7 +11,8 @@ interface SiteDataContextType {
   loading: boolean;
   hasUnsaved: boolean;
   saving: boolean;
-  save: () => Promise<void>;
+  save: (override?: SiteData) => Promise<void>;
+  replaceData: (next: SiteData) => void;
   uploadImage: (file: File, path: string) => Promise<string>;
   updateProfile: (profile: Partial<ArtistProfile>) => void;
   addArtwork: (artwork: Artwork) => void;
@@ -123,10 +124,11 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
   }, [data, savedData]);
 
   // ── Save to Firestore (explicit) ──
-  const save = useCallback(async () => {
+  const save = useCallback(async (override?: SiteData) => {
     setSaving(true);
+    const toSave = override ?? data;
     try {
-      const serialized = JSON.parse(JSON.stringify({ ...data, contentVersion: CONTENT_VERSION }));
+      const serialized = JSON.parse(JSON.stringify({ ...toSave, contentVersion: CONTENT_VERSION }));
       // Keep editing lock ON while Firestore processes the write
       isEditing.current = true;
       
@@ -137,7 +139,8 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
       await Promise.race([writePromise, timeoutPromise]);
       
       // Update saved snapshot to match what we just wrote
-      setSavedData(data);
+      setSavedData(toSave);
+      if (override) setData(override);
       setHasUnsaved(false);
       
       // Keep editing lock for 3 more seconds so onSnapshot doesn't overwrite
@@ -273,6 +276,8 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     update(d => ({ ...d, contactEmail: email }));
   }, [update]);
 
+  const replaceData = useCallback((next: SiteData) => setData(next), []);
+
   const exportData = useCallback(() => JSON.stringify(data, null, 2), [data]);
 
   const importData = useCallback((json: string): boolean => {
@@ -297,6 +302,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
       hasUnsaved,
       saving,
       save,
+      replaceData,
       uploadImage,
       updateProfile,
       addArtwork, updateArtwork, deleteArtwork,

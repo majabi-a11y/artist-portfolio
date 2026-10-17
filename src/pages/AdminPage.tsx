@@ -6,6 +6,7 @@ import { Save, Plus, Trash2, Download, Upload, RotateCcw, ChevronDown, ChevronUp
 import type { Artwork, NewsPost, PortfolioItem } from '../data/defaultData';
 import { TEXT_PALETTES } from '../App';
 import MultiImageUpload from '../components/MultiImageUpload';
+import DrivePanel from '../components/DrivePanel';
 
 type Section = 'home' | 'profile' | 'artworks' | 'fresques' | 'news' | 'portfolio' | 'menu' | 'notifications' | 'theme' | 'tools';
 
@@ -23,7 +24,7 @@ export default function AdminPage() {
     updateMenuConfig,
     updateContactEmail,
     exportData, importData, resetData,
-    save, hasUnsaved, saving,
+    save, hasUnsaved, saving, replaceData,
   } = useSiteData();
 
   const [uploading, setUploading] = useState<string | null>(null);
@@ -188,6 +189,10 @@ export default function AdminPage() {
         <p>Gérez tout le contenu de votre site</p>
       </div>
 
+      {/* Drive partagé + fiches à compléter */}
+      <DrivePanel data={data} replaceData={replaceData} save={save}
+        updateArtwork={updateArtwork} updateNews={updateNews} />
+
       {/* PDF générés à partir du contenu actuel (enregistré ou non) */}
       <div className="admin-pdf-bar">
         <button className="btn btn-outline btn-sm" disabled={pdfBusy !== null} onClick={() => exportPdf('catalogue')}>
@@ -240,7 +245,7 @@ export default function AdminPage() {
             </span>
             <button
               className="btn btn-primary btn-sm"
-              onClick={save}
+              onClick={() => save()}
               disabled={saving}
               style={{
                 display: 'flex', alignItems: 'center', gap: '6px',

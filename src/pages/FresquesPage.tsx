@@ -4,11 +4,12 @@ import { useSiteData } from '../contexts/SiteDataContext';
 import { MapPin } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import ImageCarousel from '../components/ImageCarousel';
+import { isPublished } from '../data/defaultData';
 
 export default function FresquesPage() {
   const { data } = useSiteData();
   const navigate = useNavigate();
-  const fresques = data.artworks.filter(a => a.category === 'fresque');
+  const fresques = data.artworks.filter(a => a.category === 'fresque' && isPublished(a));
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = fresques.find(f => f.id === selectedId);
 

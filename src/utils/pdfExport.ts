@@ -8,7 +8,7 @@
 import { PDFDocument, rgb, type PDFFont, type PDFPage, type PDFImage } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import type { SiteData, Artwork } from '../data/defaultData';
-import { formatPrice, contactHref } from '../data/defaultData';
+import { formatPrice, contactHref, isPublished } from '../data/defaultData';
 
 const A4: [number, number] = [595.28, 841.89];
 const M = 50;
@@ -90,7 +90,7 @@ function frame(page: PDFPage, f: Fonts, right: string, footer: string, n: number
   spaced(page, 'ADRIEN DA SILVA', M, H - 60, f.sans, 7.5);
   spaced(page, right, W - M, H - 60, f.sans, 7.5, GREY, 1.6, 'right');
   page.drawLine({ start: { x: M, y: H - 72 }, end: { x: W - M, y: H - 72 }, thickness: 0.6, color: LIGHT });
-  spaced(page, footer, M, 42, f.sans, 7, GREY, 1.4);
+  if (footer) spaced(page, footer, M, 42, f.sans, 7, GREY, 1.4);
   spaced(page, String(n).padStart(2, '0'), W - M, 42, f.sans, 7, GREY, 1.4, 'right');
 }
 
@@ -108,7 +108,7 @@ function cover(doc: PDFDocument, f: Fonts, kind: string, year: number, img: PDFI
   spaced(page, `${kind} ${year}`, W / 2, 140, f.sans, 8.5, GREY, 2.4, 'center');
 }
 
-const isStore = (a: Artwork) => a.category !== 'fresque';
+const isStore = (a: Artwork) => a.category !== 'fresque' && isPublished(a);
 
 export async function buildCataloguePdf(data: SiteData): Promise<Blob> {
   const doc = await PDFDocument.create();
@@ -124,7 +124,7 @@ export async function buildCataloguePdf(data: SiteData): Promise<Blob> {
 
   for (const [i, a] of works.entries()) {
     const page = newPage(doc);
-    frame(page, f, "CATALOGUE D'ŒUVRES", `COLLECTION ${year}`, i + 1);
+    frame(page, f, "CATALOGUE D'ŒUVRES", '', i + 1);
     const img = a.images?.[0] ? await embedImage(doc, a.images[0]) : null;
     if (img) drawFitted(page, img, M + 20, 150, W - 2 * (M + 20), H - 110 - 150);
 
@@ -156,7 +156,7 @@ export async function buildPortfolioPdf(data: SiteData): Promise<Blob> {
   const f = await loadFonts(doc);
   const year = new Date().getFullYear();
   const [W, H] = A4;
-  const fresques = data.artworks.filter(a => a.category === 'fresque');
+  const fresques = data.artworks.filter(a => a.category === 'fresque' && isPublished(a));
   const footer = `PORTFOLIO ${year}`;
   let n = 0;
 
