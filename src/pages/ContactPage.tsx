@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { ArrowUpRight } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import ContactForm, { type ContactSubject } from '../components/ContactForm';
+import { contactHref, formatPrice, whatsappLink } from '../data/defaultData';
+import { MessageCircle } from 'lucide-react';
 
 export default function ContactPage() {
   const { data } = useSiteData();
@@ -16,6 +18,14 @@ export default function ContactPage() {
     if (type === 'quote') return { type: 'quote', fresqueTitle: searchParams.get('title') || '' };
     if (type === 'collaboration') return { type: 'collaboration' };
     return { type: 'free' };
+  };
+
+  const whatsappMessage = () => {
+    const type = searchParams.get('type');
+    const title = searchParams.get('title');
+    if (type === 'buy' && title) return `Bonjour Adrien, je suis intéressé(e) par l'œuvre « ${title} ».`;
+    if (type === 'quote') return title ? `Bonjour Adrien, je souhaite un devis pour une fresque, dans l'esprit de « ${title} ».` : 'Bonjour Adrien, je souhaite un devis pour une fresque.';
+    return 'Bonjour Adrien, ';
   };
 
   return (
@@ -38,12 +48,8 @@ export default function ContactPage() {
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
               {profile.contact.map((item, i) => {
-                const href = item.value.includes('@') ? `mailto:${item.value}` :
-                  item.value.startsWith('http') ? item.value :
-                  item.value.startsWith('+') ? `tel:${item.value}` :
-                  `https://${item.value}`;
-                const isExternal = item.value.startsWith('http') || 
-                  (!item.value.includes('@') && !item.value.startsWith('+'));
+                const href = contactHref(item.label, item.value);
+                const isExternal = href.startsWith('http');
 
                 return (
                   <a key={i} href={href}
@@ -67,6 +73,17 @@ export default function ContactPage() {
               })}
             </div>
           </div>
+        )}
+
+        {/* WhatsApp direct, message prérempli selon la demande */}
+        {data.whatsapp && (
+          <a className="whatsapp-cta" href={whatsappLink(data.whatsapp, whatsappMessage())} target="_blank" rel="noopener noreferrer">
+            <MessageCircle size={18} strokeWidth={1.6} />
+            <span>
+              <strong>Écrire sur WhatsApp</strong>
+              <small>Réponse directe d'Adrien</small>
+            </span>
+          </a>
         )}
 
         {/* Contact form */}
@@ -94,7 +111,7 @@ export default function ContactPage() {
                 </div>
                 {searchParams.get('price') && (
                   <div style={{ fontSize: '0.72rem', color: 'var(--color-accent)', marginTop: '4px' }}>
-                    {searchParams.get('price')} € TTC
+                    {formatPrice(searchParams.get('price') || '')}
                   </div>
                 )}
               </div>

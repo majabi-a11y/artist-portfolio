@@ -2097,3 +2097,25 @@ textarea.admin-input {
   cursor: pointer;
 }
 .filter-switches input { accent-color: var(--color-accent); width: 16px; height: 16px; }
+
+/* WhatsApp direct (page Contact) */
+.whatsapp-cta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(37, 211, 102, 0.35);
+  background: rgba(37, 211, 102, 0.06);
+  color: var(--color-white);
+  text-decoration: none;
+  transition: background var(--transition-fast);
+}
+.whatsapp-cta:hover { background: rgba(37, 211, 102, 0.12); }
+.whatsapp-cta svg { color: #25d366; flex-shrink: 0; }
+.whatsapp-cta span { display: flex; flex-direction: column; gap: 2px; }
+.whatsapp-cta strong { font-size: 0.86rem; font-weight: 500; }
+.whatsapp-cta small { font-size: 0.66rem; color: var(--color-text-muted); letter-spacing: 0.04em; }
+
+/* Admin : PDF à jour */
+.admin-pdf-bar { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 20px; }

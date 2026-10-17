@@ -43,6 +43,22 @@ export default function AdminPage() {
   }, [uploadImage]);
 
   const [activeSection, setActiveSection] = useState<Section>('profile');
+
+  // ── PDF à jour ──
+  const [pdfBusy, setPdfBusy] = useState<'catalogue' | 'portfolio' | null>(null);
+  const exportPdf = async (kind: 'catalogue' | 'portfolio') => {
+    setPdfBusy(kind);
+    try {
+      const { buildCataloguePdf, buildPortfolioPdf, downloadBlob } = await import('../utils/pdfExport');
+      const blob = kind === 'catalogue' ? await buildCataloguePdf(data) : await buildPortfolioPdf(data);
+      const date = new Date().toISOString().slice(0, 10);
+      downloadBlob(blob, `adrien-da-silva-${kind}-${date}.pdf`);
+    } catch (err) {
+      alert(`Le PDF n'a pas pu être créé : ${err instanceof Error ? err.message : 'erreur inconnue'}`);
+    } finally {
+      setPdfBusy(null);
+    }
+  };
   const [editingArtwork, setEditingArtwork] = useState<string | null>(null);
   const [editingNews, setEditingNews] = useState<string | null>(null);
   const [editingPortfolio, setEditingPortfolio] = useState<string | null>(null);
@@ -170,6 +186,16 @@ export default function AdminPage() {
       <div className="page-header">
         <h1>Administration</h1>
         <p>Gérez tout le contenu de votre site</p>
+      </div>
+
+      {/* PDF générés à partir du contenu actuel (enregistré ou non) */}
+      <div className="admin-pdf-bar">
+        <button className="btn btn-outline btn-sm" disabled={pdfBusy !== null} onClick={() => exportPdf('catalogue')}>
+          <Download size={13} /> {pdfBusy === 'catalogue' ? 'Préparation…' : 'Catalogue PDF à jour'}
+        </button>
+        <button className="btn btn-outline btn-sm" disabled={pdfBusy !== null} onClick={() => exportPdf('portfolio')}>
+          <Download size={13} /> {pdfBusy === 'portfolio' ? 'Préparation…' : 'Portfolio PDF à jour'}
+        </button>
       </div>
 
       {/* Section tabs */}

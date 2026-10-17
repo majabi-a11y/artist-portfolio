@@ -115,6 +115,7 @@ export interface SiteData {
   homeNav: HomeNavItem[];
   menuConfig: MenuConfig;
   contactEmail: string; // Email address for contact form submissions
+  whatsapp?: string; // numéro international sans « + » ni espaces (ex. 33684732265)
   contentVersion?: number; // voir CONTENT_VERSION
 }
 
@@ -140,6 +141,20 @@ export const formatPrice = (price: string) => {
 
 export const CATALOGUE_PDF = '/catalogue-adrien-da-silva-2026.pdf';
 
+/** Lien WhatsApp direct, avec un message prérempli. */
+export const whatsappLink = (number: string, text?: string) =>
+  `https://wa.me/${number.replace(/\D/g, '')}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
+
+/** Lien d'une ligne de contact : Instagram, WhatsApp/téléphone, e-mail ou site. */
+export function contactHref(label: string, value: string): string {
+  const v = value.trim();
+  if (/instagram/i.test(label)) return `https://instagram.com/${v.replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '')}`;
+  if (/whatsapp/i.test(label)) return whatsappLink(v);
+  if (/^[\w.+-]+@[\w-]+\.[\w.]+$/.test(v)) return `mailto:${v}`;
+  if (v.startsWith('+')) return `tel:${v.replace(/\s/g, '')}`;
+  return v.startsWith('http') ? v : `https://${v}`;
+}
+
 // Œuvres et légendes : catalogue A.D. 2026 d'Adrien. Fresques : son portfolio 2026.
 export const defaultSiteData: SiteData = {
   contentVersion: CONTENT_VERSION,
@@ -162,6 +177,7 @@ export const defaultSiteData: SiteData = {
       { label: 'Atelier', value: 'Montpellier' },
       { label: 'Email', value: 'adrien.enaer@gmail.com' },
       { label: 'Instagram', value: '@adrien_dasilva' },
+      { label: 'WhatsApp', value: '+33 6 84 73 22 65' },
     ],
     technique: [],
     cvSections: [
@@ -314,4 +330,6 @@ export const defaultSiteData: SiteData = {
     ],
   },
   contactEmail: 'adrien.enaer@gmail.com',
+  // Numéro du portfolio 2026 d'Adrien (dos de couverture)
+  whatsapp: '33684732265',
 };
