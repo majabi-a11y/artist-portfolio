@@ -120,11 +120,11 @@ export default function ArtworkDetailPage() {
             alignItems: 'center',
             gap: '8px',
             padding: '12px 16px',
-            background: 'rgba(139,92,246,0.1)',
+            background: 'var(--color-accent-subtle)',
             marginTop: '8px',
             fontSize: '0.85rem',
-            color: '#a78bfa',
-            border: '1px solid rgba(139,92,246,0.2)',
+            color: 'var(--color-accent)',
+            border: '1px solid var(--color-accent-muted)',
           }}>
             <MapPin size={16} />
             {artwork.exhibition}

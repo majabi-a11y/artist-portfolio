@@ -319,7 +319,7 @@ export default function AdminPage() {
                     <div style={{
                       width: '16px', height: '16px', borderRadius: '50%',
                       border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0,
-                      background: item.textColor || '#f2ede8',
+                      background: item.textColor || '#f4efe9',
                     }} />
 
                     <ChevronRight size={14} style={{
@@ -374,11 +374,11 @@ export default function AdminPage() {
                       <div style={{ marginBottom: '10px' }}>
                         <label className="admin-label">Couleur du texte</label>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          <input type="color" value={item.textColor || '#f2ede8'}
+                          <input type="color" value={item.textColor || '#f4efe9'}
                             onChange={e => updateHomeNav(i, { textColor: e.target.value })}
                             style={{ width: '32px', height: '32px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', cursor: 'pointer', padding: 0 }} />
                           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                            {['#f2ede8', '#ffffff', '#000000', '#c9a090', '#a0c9b0', '#90a0c9'].map(c => (
+                            {['#f4efe9', '#ffffff', '#000000', '#ff5c9d', '#e8cdbf', '#1d1aa8'].map(c => (
                               <button key={c} onClick={() => updateHomeNav(i, { textColor: c })}
                                 style={{
                                   width: '20px', height: '20px', borderRadius: '50%', background: c, border: item.textColor === c ? '2px solid var(--color-accent)' : '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', padding: 0,
@@ -392,11 +392,11 @@ export default function AdminPage() {
                       <div style={{ marginBottom: '10px' }}>
                         <label className="admin-label">Couleur de fond</label>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          <input type="color" value={item.bgColor || '#0a0a0a'}
+                          <input type="color" value={item.bgColor || '#0d0b14'}
                             onChange={e => updateHomeNav(i, { bgColor: e.target.value })}
                             style={{ width: '32px', height: '32px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', cursor: 'pointer', padding: 0 }} />
                           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                            {['#0a0a0a', '#1a1a2e', '#2d0a2e', '#0e1a0e', '#1a0e0e', '#ffffff'].map(c => (
+                            {['#0d0b14', '#16139e', '#452843', '#52204b', '#e8cdbf', '#ffffff'].map(c => (
                               <button key={c} onClick={() => updateHomeNav(i, { bgColor: c })}
                                 style={{
                                   width: '20px', height: '20px', borderRadius: '50%', background: c, border: item.bgColor === c ? '2px solid var(--color-accent)' : '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', padding: 0,
@@ -938,7 +938,7 @@ export default function AdminPage() {
                       items[i] = { ...item, label: e.target.value };
                       updateMenuConfig({ items });
                     }} />
-                  <input type="color" value={item.textColor || '#f2ede8'}
+                  <input type="color" value={item.textColor || '#f4efe9'}
                     onChange={e => {
                       const items = [...(data.menuConfig?.items || [])];
                       items[i] = { ...item, textColor: e.target.value };
@@ -960,10 +960,10 @@ export default function AdminPage() {
               const lineCount = Math.max(items.length - 1, 0);
               const lines = data.menuConfig?.lines || [];
               return Array.from({ length: lineCount }, (_, li) => {
-                const line = lines[li] || { color: data.menuConfig?.lineColor || '#c9a090', thickness: 4, offsetX: 10, width: 30 };
+                const line = lines[li] || { color: data.menuConfig?.lineColor || '#ff5c9d', thickness: 4, offsetX: 10, width: 30 };
                 const updateLine = (updates: Partial<typeof line>) => {
                   const newLines = [...lines];
-                  while (newLines.length <= li) newLines.push({ color: data.menuConfig?.lineColor || '#c9a090', thickness: 4, offsetX: 10, width: 30 });
+                  while (newLines.length <= li) newLines.push({ color: data.menuConfig?.lineColor || '#ff5c9d', thickness: 4, offsetX: 10, width: 30 });
                   newLines[li] = { ...newLines[li], ...updates };
                   updateMenuConfig({ lines: newLines });
                 };
@@ -1032,24 +1032,24 @@ export default function AdminPage() {
               <label style={{ position: 'relative', cursor: 'pointer' }}>
                 <div style={{
                   width: '48px', height: '48px', borderRadius: '10px',
-                  background: data.theme?.bgColor || '#0a0a0a',
+                  background: data.theme?.bgColor || '#0d0b14',
                   border: '2px solid rgba(255,255,255,0.12)',
                 }} />
-                <input type="color" value={data.theme?.bgColor || '#0a0a0a'}
+                <input type="color" value={data.theme?.bgColor || '#0d0b14'}
                   onChange={e => updateTheme({ bgColor: e.target.value })}
                   style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
               </label>
               <div>
-                <input className="admin-input" value={data.theme?.bgColor || '#0a0a0a'}
+                <input className="admin-input" value={data.theme?.bgColor || '#0d0b14'}
                   onChange={e => updateTheme({ bgColor: e.target.value })}
                   style={{ width: '100px', marginBottom: 0, fontFamily: 'monospace', fontSize: '0.7rem' }} />
               </div>
               <div style={{ display: 'flex', gap: '6px' }}>
-                {['#0a0a0a', '#0d1117', '#1a1a2e', '#0f0f0f', '#141414', '#0a0e17', '#1a0e0e', '#0e1a15'].map(c => (
+                {['#0d0b14', '#0d1117', '#1a1a2e', '#0f0f0f', '#141414', '#0a0e17', '#1a0e0e', '#0e1a15'].map(c => (
                   <button key={c} onClick={() => updateTheme({ bgColor: c })}
                     style={{
                       width: '28px', height: '28px', borderRadius: '6px', background: c,
-                      border: (data.theme?.bgColor || '#0a0a0a') === c ? '2px solid var(--color-accent)' : '1px solid rgba(255,255,255,0.1)',
+                      border: (data.theme?.bgColor || '#0d0b14') === c ? '2px solid var(--color-accent)' : '1px solid rgba(255,255,255,0.1)',
                       cursor: 'pointer',
                     }} />
                 ))}
@@ -1065,7 +1065,7 @@ export default function AdminPage() {
                   <button key={id}
                     onClick={() => updateTheme({ paletteId: id })}
                     style={{
-                      background: data.theme?.bgColor || '#0a0a0a',
+                      background: data.theme?.bgColor || '#0d0b14',
                       border: isActive ? `2px solid ${p.accent}` : '1px solid rgba(255,255,255,0.1)',
                       borderRadius: '12px',
                       padding: '14px 12px',

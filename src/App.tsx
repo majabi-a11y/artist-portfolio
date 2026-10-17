@@ -24,6 +24,8 @@ export const TEXT_PALETTES: Record<string, {
   accent: string;
   accentMuted: string;
 }> = {
+  // D'après ses toiles : papier, encre violette, rose fluo du soleil de la couverture
+  soleil: { name: 'Soleil', text: '#f4efe9', textSecondary: 'rgba(244,239,233,0.72)', textMuted: 'rgba(244,239,233,0.52)', accent: '#ff5c9d', accentMuted: 'rgba(255,92,157,0.42)' },
   warm: { name: 'Terracotta', text: '#f2ede8', textSecondary: 'rgba(242,237,232,0.55)', textMuted: 'rgba(242,237,232,0.25)', accent: '#c9a090', accentMuted: 'rgba(201,160,144,0.45)' },
   cool: { name: 'Glacier', text: '#e8eef2', textSecondary: 'rgba(232,238,242,0.55)', textMuted: 'rgba(232,238,242,0.25)', accent: '#90b8c9', accentMuted: 'rgba(144,184,201,0.45)' },
   gold: { name: 'Doré', text: '#f5f0e6', textSecondary: 'rgba(245,240,230,0.55)', textMuted: 'rgba(245,240,230,0.25)', accent: '#c9b070', accentMuted: 'rgba(201,176,112,0.45)' },
@@ -51,8 +53,8 @@ function DynamicTheme() {
         description: 'Artiste peintre et muraliste — Montpellier',
         start_url: '/',
         display: 'standalone',
-        background_color: '#0a0a0a',
-        theme_color: data.theme?.bgColor || '#0a0a0a',
+        background_color: '#0d0b14',
+        theme_color: data.theme?.bgColor || '#0d0b14',
         orientation: 'portrait',
         icons: [
           { src: iconUrl, sizes: '192x192', type: 'image/png' },
@@ -69,7 +71,7 @@ function DynamicTheme() {
     const theme = data.theme;
     if (theme) {
       const root = document.documentElement;
-      const bg = theme.bgColor || '#0a0a0a';
+      const bg = theme.bgColor || '#0d0b14';
       root.style.setProperty('--color-bg', bg);
       root.style.setProperty('--color-black', bg);
 
@@ -92,13 +94,14 @@ function DynamicTheme() {
       root.style.setProperty('--color-dark-elevated', elevated);
       root.style.setProperty('--color-dark-border', border);
 
-      const palette = TEXT_PALETTES[theme.paletteId] || TEXT_PALETTES.warm;
+      const palette = TEXT_PALETTES[theme.paletteId] || TEXT_PALETTES.soleil;
       root.style.setProperty('--color-text', palette.text);
       root.style.setProperty('--color-white', palette.text);
       root.style.setProperty('--color-text-secondary', palette.textSecondary);
       root.style.setProperty('--color-text-muted', palette.textMuted);
       root.style.setProperty('--color-accent', palette.accent);
       root.style.setProperty('--color-accent-muted', palette.accentMuted);
+      root.style.setProperty('--color-accent-subtle', palette.accentMuted.replace(/[\d.]+\)$/, '0.1)'));
 
       // SEO: dynamic meta tags
       document.title = `${data.profile.name} — ${data.profile.tagline}`;

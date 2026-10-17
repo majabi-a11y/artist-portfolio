@@ -32,16 +32,16 @@ export default function BottomNav() {
       .map(item => ({
         label: item.label,
         route: item.route,
-        textColor: item.textColor || '#f2ede8',
+        textColor: item.textColor || '#f4efe9',
       }));
 
     let items = homeItems.length ? homeItems : (
       data.menuConfig?.items?.length ? data.menuConfig.items : [
-        { label: 'Accueil', route: '/', textColor: '#f2ede8' },
-        { label: 'Store', route: '/catalogue', textColor: '#f2ede8' },
-        { label: 'Atelier', route: '/portfolio', textColor: '#f2ede8' },
-        { label: 'Journal', route: '/journal', textColor: '#f2ede8' },
-        { label: 'Contact', route: '/contact', textColor: '#f2ede8' },
+        { label: 'Accueil', route: '/', textColor: '#f4efe9' },
+        { label: 'Catalogue', route: '/catalogue', textColor: '#f4efe9' },
+        { label: 'Atelier', route: '/portfolio', textColor: '#f4efe9' },
+        { label: 'Journal', route: '/journal', textColor: '#f4efe9' },
+        { label: 'Contact', route: '/contact', textColor: '#f4efe9' },
       ]
     );
     // Deduplicate by route AND by label (case-insensitive)
@@ -58,8 +58,8 @@ export default function BottomNav() {
   }, [data.homeNav, data.menuConfig, isPWA]);
 
   const lineConfig = useMemo(() => {
-    const cfg = data.menuConfig || { items: [], lineColor: '#c9a090', lineThickness: 4 };
-    return { color: cfg.lineColor || '#c9a090', thickness: cfg.lineThickness || 4 };
+    const cfg = data.menuConfig || { items: [], lineColor: '#ff5c9d', lineThickness: 4 };
+    return { color: cfg.lineColor || '#ff5c9d', thickness: cfg.lineThickness || 4 };
   }, [data.menuConfig]);
 
   const handleClick = useCallback((route: string) => {
@@ -91,10 +91,10 @@ export default function BottomNav() {
         <nav className="menu-nav">
           {menuItems.map((item, i) => {
             // Per-line config: lines[i-1] corresponds to the line before item i
-            const cfg = data.menuConfig || { items: [], lines: [], lineColor: '#c9a090', lineThickness: 4 };
+            const cfg = data.menuConfig || { items: [], lines: [], lineColor: '#ff5c9d', lineThickness: 4 };
             const lineIdx = i - 1;
             const lineCfg = cfg.lines?.[lineIdx];
-            const lColor = lineCfg?.color || cfg.lineColor || '#c9a090';
+            const lColor = lineCfg?.color || cfg.lineColor || '#ff5c9d';
             const lThick = lineCfg?.thickness || cfg.lineThickness || 4;
             const lOffset = lineCfg?.offsetX ?? 10;
             const lWidth = lineCfg?.width ?? 30;

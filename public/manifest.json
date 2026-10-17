@@ -4,8 +4,8 @@
   "description": "Artiste peintre et muraliste — Montpellier",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#2d0a2e",
+  "background_color": "#0d0b14",
+  "theme_color": "#0d0b14",
   "orientation": "portrait",
   "icons": [
     {

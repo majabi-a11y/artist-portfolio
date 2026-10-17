@@ -2,25 +2,26 @@
 
 /* ========== DESIGN TOKENS ========== */
 :root {
-  --color-black: #0a0a0a;
-  --color-near-black: #0e0e0e;
-  --color-dark-surface: #131313;
-  --color-dark-card: #181818;
-  --color-dark-elevated: #1e1e1e;
+  --color-black: #0d0b14;
+  --color-near-black: #110f18;
+  --color-dark-surface: #191720;
+  --color-dark-card: #15131c;
+  --color-dark-elevated: #1f1d26;
   --color-dark-border: rgba(255,255,255,0.06);
 
-  --color-accent: #c9a090;
-  --color-accent-subtle: rgba(201,160,144,0.12);
-  --color-accent-muted: rgba(201,160,144,0.45);
+  --color-accent: #ff5c9d;
+  --color-accent-subtle: rgba(255,92,157,0.1);
+  --color-accent-muted: rgba(255,92,157,0.42);
+  --color-outremer: #1d1aa8; /* « Lignes de vies » */
 
-  --color-white: #f2ede8;
+  --color-white: #f4efe9;
   --color-pure-white: #ffffff;
 
   --color-bg: var(--color-black);
   --color-surface: var(--color-near-black);
   --color-text: var(--color-white);
-  --color-text-secondary: rgba(242,237,232,0.7);
-  --color-text-muted: rgba(242,237,232,0.4);
+  --color-text-secondary: rgba(244,239,233,0.72);
+  --color-text-muted: rgba(244,239,233,0.52);
 
   --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
 
@@ -2196,14 +2197,14 @@ textarea.admin-input {
   color: #1a1a1a;
   outline: none;
 }
-.invite-form input[type="email"]:focus { border-color: #1a1a1a; }
+.invite-form input[type="email"]:focus { border-color: var(--color-outremer); }
 .invite-form button, .invite-btn {
   font: inherit;
   font-size: 0.74rem;
   letter-spacing: 0.06em;
   padding: 13px 18px;
-  border: 1px solid #1a1a1a;
-  background: #1a1a1a;
+  border: 1px solid var(--color-outremer);
+  background: var(--color-outremer);
   color: #f4f1ec;
   cursor: pointer;
   display: inline-flex;
@@ -2213,7 +2214,7 @@ textarea.admin-input {
   transition: opacity var(--transition-fast);
 }
 .invite-form button:disabled { opacity: 0.6; }
-.invite-btn.is-ghost { background: transparent; color: #1a1a1a; }
+.invite-btn.is-ghost { background: transparent; color: var(--color-outremer); }
 .invite-legal, .invite-error { grid-column: 1 / -1; font-size: 0.64rem; color: #8a7f78; }
 .invite-error { color: #c0392b; }
 .invite-ok { display: flex; align-items: center; gap: 6px; font-size: 0.74rem; color: #2f7d4f; margin-top: 12px; }
@@ -2277,3 +2278,5 @@ textarea.admin-input {
 .invites-list { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; }
 .invites-list li { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.74rem; }
 .invites-list small { color: var(--color-text-muted); white-space: nowrap; }
+/* Vendue : la pastille rouge suffit, le texte reste discret (pas de rose à côté du rouge) */
+.gallery-price.is-sold, .detail-price.is-sold { color: var(--color-text-secondary); }
