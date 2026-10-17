@@ -1,13 +1,16 @@
 /**
- * Envoi d'e-mails et liste d'abonnés via Brevo (clé secrète côté serveur uniquement).
+ * E-mails envoyés depuis le Gmail d'Adrien (mot de passe d'application Google, côté serveur uniquement)
+ * et liste des invités dans Supabase (supabase/migrations/0002_invitations.sql).
  * Variables Vercel :
- *   BREVO_API_KEY      clé API Brevo (secrète)
- *   BREVO_SENDER       adresse d'expéditeur validée dans Brevo (ex. adrien.enaer@gmail.com)
- *   CONTACT_TO         destinataire des messages du site (Adrien)
- *   BREVO_LIST_ID      liste « Invitations » (facultatif : sans elle, pas d'inscription)
+ *   GMAIL_USER          adresse Gmail d'Adrien (expéditeur)
+ *   GMAIL_APP_PASSWORD  mot de passe d'application Google (16 lettres, secret)
+ *   CONTACT_TO          destinataire des messages du site (Adrien)
  */
-const API = 'https://api.brevo.com/v3';
+import nodemailer from 'nodemailer';
+
 export const SITE_URL = 'https://adriendasilva.vercel.app';
+const SUPABASE_URL = 'https://wtfutafhjfnkdqignlzk.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_-Z8ZjW0oASENwp0SnlmD-w_jOw0Q-ph'; // clé publique (déjà dans le site)
 
 function env(name: string): string {
   const v = process.env[name];
@@ -15,38 +18,30 @@ function env(name: string): string {
   return v;
 }
 
-async function brevo(path: string, body: unknown): Promise<void> {
-  const res = await fetch(`${API}${path}`, {
-    method: 'POST',
-    headers: { 'api-key': env('BREVO_API_KEY'), 'content-type': 'application/json', accept: 'application/json' },
-    body: JSON.stringify(body),
-  });
-  // 400 « duplicate_parameter » à l'inscription = déjà abonné : ce n'est pas une erreur
-  if (!res.ok && res.status !== 204) {
-    const text = await res.text();
-    if (!/duplicate_parameter|Contact already exist/i.test(text)) throw new Error(`Brevo ${res.status}: ${text.slice(0, 200)}`);
-  }
-}
+let transport: nodemailer.Transporter | null = null;
+const mailer = () => (transport ??= nodemailer.createTransport({
+  service: 'gmail',
+  auth: { user: env('GMAIL_USER'), pass: env('GMAIL_APP_PASSWORD').replace(/\s/g, '') },
+}));
 
-export function sendEmail(to: { email: string; name?: string }, subject: string, html: string, replyTo?: { email: string; name?: string }) {
-  return brevo('/smtp/email', {
-    sender: { email: env('BREVO_SENDER'), name: 'Adrien Da Silva' },
-    to: [to],
+export async function sendEmail(to: { email: string; name?: string }, subject: string, html: string, replyTo?: { email: string; name?: string }) {
+  await mailer().sendMail({
+    from: { name: 'Adrien Da Silva', address: env('GMAIL_USER') },
+    to: to.name ? { name: to.name, address: to.email } : to.email,
     subject,
-    htmlContent: html,
-    ...(replyTo ? { replyTo } : {}),
+    html,
+    ...(replyTo ? { replyTo: replyTo.name ? { name: replyTo.name, address: replyTo.email } : replyTo.email } : {}),
   });
 }
 
-export async function subscribe(email: string, name?: string) {
-  const list = Number(process.env.BREVO_LIST_ID);
-  if (!list) return false;
-  await brevo('/contacts', {
-    email,
-    ...(name ? { attributes: { PRENOM: name } } : {}),
-    listIds: [list],
-    updateEnabled: true,
+/** Ajoute (ou met à jour) un invité. */
+export async function subscribe(email: string, name?: string, source: 'site' | 'contact' = 'site'): Promise<boolean> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/adrien_da_silva_inscrire`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ p_email: email, p_nom: name ?? null, p_source: source }),
   });
+  if (!res.ok) throw new Error(`Supabase ${res.status}: ${(await res.text()).slice(0, 200)}`);
   return true;
 }
 
@@ -103,7 +98,7 @@ export function welcomeEmail(name?: string) {
     Pour être prévenu au moment même, installez l'app : elle tient sur l'écran d'accueil de votre téléphone.</p>
   ${button(`${SITE_URL}/?bienvenue=invite`, "INSTALLER L'APP")}
   <p style="font:12px/1.6 Helvetica,Arial,sans-serif;margin:22px 0 0;color:#9a928c">
-    Un lien de désinscription figure dans chaque invitation.</p>
+    Pour ne plus rien recevoir, répondez simplement « stop » à cet e-mail.</p>
 </td></tr>`);
 }
 

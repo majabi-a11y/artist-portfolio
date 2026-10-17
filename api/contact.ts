@@ -1,6 +1,6 @@
-import { sendEmail, subscribe, contactTo, confirmationEmail, messageToArtist } from './_brevo';
+import { sendEmail, subscribe, contactTo, confirmationEmail, messageToArtist } from './_mail';
 
-/** Formulaire de contact : message à Adrien + confirmation au visiteur (+ inscription s'il l'a demandée). */
+/** Formulaire de contact (envoyé depuis le Gmail d'Adrien) : message à Adrien + confirmation au visiteur (+ inscription s'il l'a demandée). */
 export async function POST(request: Request): Promise<Response> {
   let body: Record<string, unknown>;
   try { body = await request.json(); } catch { return json(400, 'Requête illisible'); }
@@ -14,7 +14,7 @@ export async function POST(request: Request): Promise<Response> {
   if (!name || !message || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json(400, 'Champs incomplets');
 
   try {
-    const subscribed = wantsInvites ? await subscribe(email, name) : false;
+    const subscribed = wantsInvites ? await subscribe(email, name, 'contact') : false;
     await sendEmail({ email: contactTo(), name: 'Adrien Da Silva' }, `Site — ${subject} — ${name}`,
       messageToArtist({ name, email, subject, message, subscribed }), { email, name });
     await sendEmail({ email, name }, 'Votre message est bien arrivé', confirmationEmail(name, subject, message, subscribed));

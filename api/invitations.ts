@@ -1,4 +1,4 @@
-import { sendEmail, subscribe, welcomeEmail } from './_brevo';
+import { sendEmail, subscribe, welcomeEmail } from './_mail';
 
 /** Inscription à la liste « invitations aux expos » (sans passer par le formulaire de contact). */
 export async function POST(request: Request): Promise<Response> {
@@ -9,7 +9,7 @@ export async function POST(request: Request): Promise<Response> {
   const name = String(body.name ?? '').trim().slice(0, 120) || undefined;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json(400);
   try {
-    if (!(await subscribe(email, name))) return json(503);
+    await subscribe(email, name, 'site');
     await sendEmail({ email, name }, 'Vous êtes sur la liste des invités', welcomeEmail(name));
     return json(200);
   } catch (e) {

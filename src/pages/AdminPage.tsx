@@ -7,6 +7,7 @@ import type { Artwork, NewsPost, PortfolioItem } from '../data/defaultData';
 import { TEXT_PALETTES } from '../App';
 import MultiImageUpload from '../components/MultiImageUpload';
 import DrivePanel from '../components/DrivePanel';
+import InvitesPanel from '../components/InvitesPanel';
 
 type Section = 'home' | 'profile' | 'artworks' | 'fresques' | 'news' | 'portfolio' | 'menu' | 'notifications' | 'theme' | 'tools';
 
@@ -192,6 +193,7 @@ export default function AdminPage() {
       {/* Drive partagé + fiches à compléter */}
       <DrivePanel data={data} replaceData={replaceData} save={save}
         updateArtwork={updateArtwork} updateNews={updateNews} />
+      <InvitesPanel />
 
       {/* PDF générés à partir du contenu actuel (enregistré ou non) */}
       <div className="admin-pdf-bar">

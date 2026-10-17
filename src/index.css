@@ -2274,3 +2274,6 @@ textarea.admin-input {
   cursor: pointer;
   padding: 6px;
 }
+.invites-list { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; }
+.invites-list li { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.74rem; }
+.invites-list small { color: var(--color-text-muted); white-space: nowrap; }
