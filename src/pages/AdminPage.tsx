@@ -148,8 +148,12 @@ export default function AdminPage() {
     setAuthError('');
     try {
       await signInWithPopup(auth, new GoogleAuthProvider());
-    } catch {
-      setAuthError('Connexion impossible. Réessayez.');
+    } catch (err) {
+      const code = (err as { code?: string }).code ?? 'inconnue';
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
+      setAuthError(code === 'auth/popup-blocked'
+        ? 'Votre navigateur a bloqué la fenêtre Google : autorisez les fenêtres pour ce site.'
+        : `Connexion impossible (${code}).`);
     }
   };
 

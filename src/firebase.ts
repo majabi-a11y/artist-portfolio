@@ -4,7 +4,7 @@ import { getStorage } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBVK6S7_YlDH7jNJayGL5c4j1STX4VxpSI",
+  apiKey: "AIzaSyBVK6S7_YlDH7jNJayGl5c4j15TX4VxpSI",
   authDomain: "artist-portfolio-28ba9.firebaseapp.com",
   projectId: "artist-portfolio-28ba9",
   storageBucket: "artist-portfolio-28ba9.firebasestorage.app",
