@@ -169,7 +169,8 @@ export interface SiteData {
  */
 export const CONTENT_VERSION = 2;
 /** Œuvres ajoutées après le premier enregistrement en ligne : injectées une fois, sans toucher au reste (SiteDataContext). */
-export const CONTENT_ADDS = 3;
+export const CONTENT_ADDS = 4;
+export const CATALOGUE_NEWS = 'Vingt-huit œuvres, de la nouvelle série « Les jours sans vent » aux toiles « On dirait le sud » et aux séries « Temps libre » et « Hors ligne ». À voir dans le catalogue.';
 /** Corrections d'Adrien sur des œuvres déjà enregistrées (version 2). */
 export const WORK_FIXES: Record<string, Partial<Artwork>> = {
   'vita-lenta': { dimensions: '65 x 100 cm' },
@@ -362,7 +363,7 @@ export const defaultSiteData: SiteData = {
       id: 'catalogue-2026',
       title: 'Le catalogue 2026 est en ligne',
       date: '2026-10-17',
-      content: 'Dix-neuf œuvres, des toiles « On dirait le sud » aux séries « Temps libre » et « Hors ligne ». À voir dans le catalogue.',
+      content: CATALOGUE_NEWS,
       images: ['/oeuvres/couverture-catalogue-2026.webp', oeuvre('on-dirait-le-sud-146-x-97'), oeuvre('on-dirait-le-sud-116-x-89')],
       category: 'studio',
       link: CATALOGUE_PDF,

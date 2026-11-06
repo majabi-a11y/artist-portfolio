@@ -304,7 +304,7 @@ export default function AdminPage() {
         {activeSection === 'pdf' && (
           <div className="admin-section animate-in">
             <h2 className="admin-section-title">Télécharger un PDF à jour</h2>
-            <p className="drive-hint">La version complète est la plus belle. Les versions légères passent par e-mail. Les PDF contiennent les prix.</p>
+            <p className="drive-hint">La version complète est la plus belle. Les versions légères passent par e-mail. Le catalogue créé ici contient les prix.</p>
             <div className="admin-downloads">
               {(['portfolio', 'catalogue'] as const).map(kind => (
                 <div key={kind}>
@@ -798,7 +798,7 @@ export default function AdminPage() {
                   <div className="admin-card-body">
                     <AdminField label="Titre" value={post.title}
                       onChange={v => updateNews(post.id, { title: v })} />
-                    <AdminField label="Date" value={post.date}
+                    <AdminField label="Date (2026-12-12, ou juste l'année)" value={post.date}
                       onChange={v => updateNews(post.id, { date: v })} />
                     <AdminSelect label="Catégorie" value={post.category}
                       options={[
@@ -810,6 +810,10 @@ export default function AdminPage() {
                       onChange={v => updateNews(post.id, { category: v as NewsPost['category'] })} />
                     <AdminTextarea label="Contenu" value={post.content}
                       onChange={v => updateNews(post.id, { content: v })} />
+                    <AdminField label="Lien (facultatif : page web ou PDF)" value={post.link || ''}
+                      onChange={v => updateNews(post.id, { link: v })} />
+                    <AdminField label="Texte du lien (facultatif)" value={post.linkLabel || ''}
+                      onChange={v => updateNews(post.id, { linkLabel: v })} />
 
                     {/* News images (multi) */}
                     <h3 className="admin-subsection" style={{ marginTop: '8px' }}>Images</h3>

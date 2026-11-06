@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useCallback, useEffect, useRef, ty
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { uploadToSupabase } from '../supabase';
-import { defaultSiteData, CONTENT_VERSION, CONTENT_ADDS, ADDED_WORKS, WORK_FIXES, type SiteData, type Artwork, type NewsPost, type Exhibition, type PressItem, type PortfolioItem, type ThemeConfig, type ArtistProfile, type HomeNavItem, type MenuConfig } from '../data/defaultData';
+import { defaultSiteData, CONTENT_VERSION, CONTENT_ADDS, ADDED_WORKS, WORK_FIXES, CATALOGUE_NEWS, type SiteData, type Artwork, type NewsPost, type Exhibition, type PressItem, type PortfolioItem, type ThemeConfig, type ArtistProfile, type HomeNavItem, type MenuConfig } from '../data/defaultData';
 
 const SITE_DOC = doc(db, 'site', 'data');
 
@@ -66,6 +66,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     }
     if (seen < 2) merged.artworks = merged.artworks.map(a => ({ ...a, ...WORK_FIXES[a.id] }));
     if (seen < 3) merged.catalogueOnline = ''; // prix masqués : plus de PDF public
+    if (seen < 4) merged.news = merged.news.map(n => (n.id === 'catalogue-2026' ? { ...n, content: CATALOGUE_NEWS } : n));
     merged.contentAdds = CONTENT_ADDS;
     // Merge profile sub-fields
     merged.profile = { ...defaultSiteData.profile, ...(firestore.profile || {}) };

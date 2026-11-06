@@ -1,14 +1,14 @@
 import { useSiteData } from '../contexts/SiteDataContext';
 import BackButton from '../components/BackButton';
 import ImageCarousel from '../components/ImageCarousel';
-import { isPublished, onlineCatalogue } from '../data/defaultData';
+import { CATALOGUE_PDF, isPublished, onlineCatalogue } from '../data/defaultData';
 import InviteCard from '../components/InviteCard';
 
 export default function NewsPage() {
   const { data } = useSiteData();
   const news = (data.news || []).filter(isPublished);
-  // Un catalogue qui n'est pas en ligne n'est pas proposé non plus dans le journal
-  const hiddenPdf = (link: string) => !!data.catalogues?.some(c => c.url === link) && onlineCatalogue(data)?.url !== link;
+  // Un catalogue qui n'est pas en ligne n'est pas proposé dans le journal, sauf celui du site (sans prix)
+  const hiddenPdf = (link: string) => link !== CATALOGUE_PDF && !!data.catalogues?.some(c => c.url === link) && onlineCatalogue(data)?.url !== link;
 
   const formatDate = (d: string) => {
     if (/^\d{4}$/.test(d.trim())) return d.trim(); // année seule
