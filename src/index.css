@@ -2595,6 +2595,7 @@ textarea.admin-input {
 .pf-block.is-on { outline: 2px solid #ff5c9d; touch-action: none; z-index: 2; }
 .pf-handle { position: absolute; right: -9px; bottom: -9px; width: 18px; height: 18px; background: #ff5c9d; border: 2px solid #fff; cursor: nwse-resize; touch-action: none; }
 .catalogue-row { display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px; align-items: center; }
+.price-request { margin: 16px 0 12px; }
 .invite-remove { background: none; border: 0; padding: 4px; color: inherit; cursor: pointer; flex: none; }
 .invite-preview { width: 100%; height: 420px; border: 1px solid rgba(var(--ink-rgb), 0.15); background: #fff; }
 .pf-actions { display: flex; flex-wrap: wrap; gap: 8px; }

@@ -180,6 +180,17 @@ export function invitationEmail(p: { title: string; message: string; image?: str
 </td></tr>`);
 }
 
+export function priceRequestEmail(p: { name: string; contact: string; work: string; link: string }) {
+  const isEmail = p.contact.includes('@');
+  const contact = esc(p.contact);
+  return layout(`
+<tr><td style="padding:28px 36px 0;font:14px/1.7 Helvetica,Arial,sans-serif;color:#3a3633">
+  <p style="font-size:20px;font-style:italic;font-family:Georgia,serif;margin:0 0 12px;color:${ACCENT}">Demande de prix</p>
+  <p style="margin:0 0 6px"><strong>${esc(p.name)}</strong> voudrait connaître le prix de <a href="${esc(p.link)}">${esc(p.work)}</a>.</p>
+  <p style="margin:0">Contact : ${isEmail ? `<a href="mailto:${contact}">${contact}</a>` : `<a href="tel:${contact.replace(/[^\d+]/g, '')}">${contact}</a>`}</p>
+</td></tr>`);
+}
+
 export function messageToArtist(p: { name: string; email: string; subject: string; message: string; subscribed: boolean }) {
   return layout(`
 <tr><td style="padding:28px 36px 0;font:14px/1.7 Helvetica,Arial,sans-serif;color:#3a3633">

@@ -45,6 +45,11 @@ export default function CataloguesPanel({ data, save }: Props) {
     <div className="pdf-covers">
       <input ref={input} type="file" accept="application/pdf" onChange={onFile} style={{ display: 'none' }} />
       <span className="drive-label">Catalogues d'expo : le catalogue coché est téléchargeable sur le site</span>
+      <div className="catalogue-row">
+        <input type="radio" name="catalogue-online" aria-label="Aucun catalogue en ligne" checked={!online}
+          onChange={() => save({ ...data, catalogueOnline: '' })} />
+        <span>Aucun (bouton masqué sur le site)</span>
+      </div>
       {list.map(c => (
         <div key={c.id} className="catalogue-row">
           <input type="radio" name="catalogue-online" aria-label={`Mettre en ligne ${c.title}`} checked={online?.id === c.id}

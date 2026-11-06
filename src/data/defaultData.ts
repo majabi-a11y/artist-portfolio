@@ -156,7 +156,7 @@ export interface SiteData {
   driveFolderUrl?: string; // dossier Drive partagé d'où viennent les nouvelles photos
   driveImported?: string[]; // identifiants des fichiers Drive déjà importés
   catalogues?: CatalogueFile[]; // catalogues d'expo gardés dans l'admin
-  catalogueOnline?: string; // celui que le site propose au téléchargement
+  catalogueOnline?: string; // celui que le site propose au téléchargement ; vide : aucun bouton
   contentAdds?: number; // voir CONTENT_ADDS
   mailColor?: string; // couleur de tous les e-mails, invitations et e-mails de service
   pdfCovers?: { catalogue?: string }; // couvertures choisies dans l'admin (sinon automatiques)
@@ -169,7 +169,7 @@ export interface SiteData {
  */
 export const CONTENT_VERSION = 2;
 /** Œuvres ajoutées après le premier enregistrement en ligne : injectées une fois, sans toucher au reste (SiteDataContext). */
-export const CONTENT_ADDS = 2;
+export const CONTENT_ADDS = 3;
 /** Corrections d'Adrien sur des œuvres déjà enregistrées (version 2). */
 export const WORK_FIXES: Record<string, Partial<Artwork>> = {
   'vita-lenta': { dimensions: '65 x 100 cm' },
@@ -195,7 +195,7 @@ export const formatPrice = (price: string) => {
 /** Publié sur le site (les brouillons importés du Drive restent dans l'admin). */
 /** Le catalogue proposé au téléchargement sur le site. */
 export const onlineCatalogue = (data: SiteData): CatalogueFile | undefined =>
-  data.catalogues?.find(c => c.id === data.catalogueOnline) ?? data.catalogues?.[0];
+  data.catalogues?.find(c => c.id === data.catalogueOnline);
 
 export const isPublished = (item: { draft?: boolean }) => !item.draft;
 
@@ -236,7 +236,7 @@ export const defaultSiteData: SiteData = {
     { id: 'catalogue-2026', title: 'Catalogue 2026', url: CATALOGUE_PDF },
     { id: 'galerie-cilas-2026-11', title: 'Les jours sans vent, Galerie Cilas, novembre 2026', url: '/catalogues/galerie-cilas-novembre-2026.pdf' },
   ],
-  catalogueOnline: 'catalogue-2026',
+  catalogueOnline: '', // aucun : les PDF montrent les prix
   profile: {
     name: 'Adrien Da Silva',
     tagline: 'Artiste peintre et muraliste — Montpellier',

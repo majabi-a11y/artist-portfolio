@@ -1,12 +1,14 @@
 import { useSiteData } from '../contexts/SiteDataContext';
 import BackButton from '../components/BackButton';
 import ImageCarousel from '../components/ImageCarousel';
-import { isPublished } from '../data/defaultData';
+import { isPublished, onlineCatalogue } from '../data/defaultData';
 import InviteCard from '../components/InviteCard';
 
 export default function NewsPage() {
   const { data } = useSiteData();
   const news = (data.news || []).filter(isPublished);
+  // Un catalogue qui n'est pas en ligne n'est pas proposé non plus dans le journal
+  const hiddenPdf = (link: string) => !!data.catalogues?.some(c => c.url === link) && onlineCatalogue(data)?.url !== link;
 
   const formatDate = (d: string) => {
     if (/^\d{4}$/.test(d.trim())) return d.trim(); // année seule
@@ -59,7 +61,7 @@ export default function NewsPage() {
                     <p style={{ fontSize: '0.78rem', lineHeight: 1.7, color: 'var(--color-text-secondary)', whiteSpace: 'pre-line' }}>
                       {post.content}
                     </p>
-                    {post.link && (
+                    {post.link && !hiddenPdf(post.link) && (
                       <a href={post.link} className="news-link" {...(post.link.endsWith('.pdf') ? { download: true } : { target: '_blank', rel: 'noopener noreferrer' })}>
                         {post.linkLabel || 'En savoir plus'} →
                       </a>

@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { ArrowUpRight } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import ContactForm, { type ContactSubject } from '../components/ContactForm';
-import { contactHref, formatPrice, whatsappLink } from '../data/defaultData';
+import { contactHref, whatsappLink } from '../data/defaultData';
 
 export default function ContactPage() {
   const { data } = useSiteData();
@@ -111,11 +111,6 @@ export default function ContactPage() {
                 <div style={{ fontSize: '0.82rem', fontWeight: 500, color: 'var(--color-text)' }}>
                   {searchParams.get('title')}
                 </div>
-                {searchParams.get('price') && (
-                  <div style={{ fontSize: '0.72rem', color: 'var(--color-accent)', marginTop: '4px' }}>
-                    {formatPrice(searchParams.get('price') || '')}
-                  </div>
-                )}
               </div>
             </div>
           )}

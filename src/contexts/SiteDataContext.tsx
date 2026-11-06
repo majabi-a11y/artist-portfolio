@@ -65,6 +65,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
       merged.artworks = [...defaultSiteData.artworks.filter(a => ADDED_WORKS.includes(a.id) && !have.has(a.id)), ...merged.artworks];
     }
     if (seen < 2) merged.artworks = merged.artworks.map(a => ({ ...a, ...WORK_FIXES[a.id] }));
+    if (seen < 3) merged.catalogueOnline = ''; // prix masqués : plus de PDF public
     merged.contentAdds = CONTENT_ADDS;
     // Merge profile sub-fields
     merged.profile = { ...defaultSiteData.profile, ...(firestore.profile || {}) };

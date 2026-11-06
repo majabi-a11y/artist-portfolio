@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSiteData } from '../contexts/SiteDataContext';
 import type { Artwork } from '../data/defaultData';
-import { thumb, formatPrice, isPublished, onlineCatalogue, SERIES } from '../data/defaultData';
+import { thumb, isPublished, onlineCatalogue, SERIES } from '../data/defaultData';
 import BackButton from '../components/BackButton';
 import { Search, Download } from 'lucide-react';
 
@@ -90,9 +90,7 @@ export default function CataloguePage() {
         <span className="gallery-meta">
           {[artwork.dimensions, artwork.year].filter(Boolean).join(' · ')}
         </span>
-        <span className={`gallery-price ${artwork.status === 'sold' ? 'is-sold' : ''}`}>
-          {artwork.status === 'sold' ? 'Vendue' : artwork.price ? formatPrice(artwork.price) : ''}
-        </span>
+        {artwork.status === 'sold' && <span className="gallery-price is-sold">Vendue</span>}
       </div>
     </button>
   );

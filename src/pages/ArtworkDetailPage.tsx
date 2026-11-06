@@ -1,8 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSiteData } from '../contexts/SiteDataContext';
-import { formatPrice, isPublished } from '../data/defaultData';
+import { isPublished } from '../data/defaultData';
 import { ArrowLeft, Share2, MapPin } from 'lucide-react';
 import ImageViewer from '../components/ImageViewer';
+import PriceRequest from '../components/PriceRequest';
 import { useState, useEffect } from 'react';
 import { recordView } from '../lib/taste';
 
@@ -120,7 +121,7 @@ export default function ArtworkDetailPage() {
         </div>
 
         <p className={`detail-price ${artwork.status === 'sold' ? 'is-sold' : ''}`}>
-          {artwork.status === 'sold' ? 'Vendue' : artwork.price ? formatPrice(artwork.price) : statusLabels[artwork.status]}
+          {artwork.status === 'sold' ? 'Vendue' : statusLabels[artwork.status]}
         </p>
 
         {artwork.exhibition && (
@@ -143,14 +144,10 @@ export default function ArtworkDetailPage() {
         {/* Description */}
         {artwork.description && <p className="detail-description">{artwork.description}</p>}
 
+        {artwork.status === 'available' && <PriceRequest artwork={artwork} />}
+
         {/* Action buttons */}
         <div style={{ display: 'flex', gap: '10px' }}>
-          {artwork.status === 'available' && (
-            <button className="btn btn-primary btn-block" id="contact-btn"
-              onClick={() => navigate(`/contact?type=buy&title=${encodeURIComponent(artwork.title)}&image=${encodeURIComponent(artwork.images?.[0] || '')}&price=${encodeURIComponent(artwork.price || '')}`)}>
-              Commander
-            </button>
-          )}
           <button className="btn btn-outline btn-block" id="inquiry-btn"
             onClick={() => navigate(`/contact?type=free`)}>
             Demande d'information
