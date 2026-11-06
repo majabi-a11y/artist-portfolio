@@ -93,6 +93,9 @@ export default function InvitesPanel({ data, replaceData }: Props) {
     else setInvites(list => list?.filter(i => i.email !== email) ?? null);
   };
 
+  // La liste s'affiche dès l'ouverture de la rubrique
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const copyAll = async () => {
     if (!invites?.length) return;
     await navigator.clipboard.writeText(invites.map(i => i.email).join(', '));
@@ -108,7 +111,7 @@ export default function InvitesPanel({ data, replaceData }: Props) {
         {invites && <span className="drive-badge">{invites.length}</span>}
       </div>
       {!invites ? (
-        <button className="btn btn-outline btn-sm" onClick={load}>Afficher la liste des invités</button>
+        <p className="drive-hint">{error ? 'La liste n’a pas pu être chargée.' : 'Chargement de la liste…'}</p>
       ) : invites.length === 0 ? (
         <p className="drive-hint">Personne pour l'instant.</p>
       ) : (

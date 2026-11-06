@@ -2120,7 +2120,21 @@ textarea.admin-input {
 .whatsapp-cta small { font-size: 0.66rem; color: var(--color-text-muted); letter-spacing: 0.04em; }
 
 /* Admin : PDF à jour */
-.admin-pdf-bar { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 20px; }
+.admin-nav { display: flex; gap: 6px; max-width: 752px; padding: 0 16px; margin: 0 auto 20px; overflow-x: auto; scrollbar-width: none; }
+#admin-page .page-header { max-width: 752px; margin-inline: auto; }
+#admin-page .page-header h1 { font-size: clamp(1.25rem, 6vw, 3rem); letter-spacing: 0.12em; }
+.admin-nav .btn { white-space: nowrap; font-size: 0.74rem; flex: none; }
+.admin-nav-count { margin-left: 4px; font-size: 0.6rem; opacity: 0.6; }
+.admin-tasks { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-bottom: 28px; }
+.admin-task { display: flex; flex-direction: column; gap: 6px; padding: 18px; text-align: left; color: inherit; background: none; border: 1px solid rgba(var(--ink-rgb), 0.18); cursor: pointer; }
+.admin-task:hover { border-color: rgba(var(--ink-rgb), 0.5); }
+.admin-task strong { font-size: 0.95rem; font-weight: 500; }
+.admin-task span { font-size: 0.72rem; color: var(--color-text-muted); }
+.admin-subnav { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.admin-link { padding: 0; border: 0; background: none; color: inherit; font: inherit; font-size: 0.74rem; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.admin-link[aria-current='page'] { font-weight: 600; text-decoration: none; }
+.admin-save-bar { position: sticky; top: 60px; z-index: 100; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; margin-bottom: 16px; background: var(--color-dark-surface); border-bottom: 1px solid rgba(var(--ink-rgb), 0.2); font-size: 0.74rem; }
+.admin-downloads { display: flex; flex-direction: column; gap: 14px; margin: 12px 0 32px; }
 
 .spin { animation: spin 0.9s linear infinite; }
 

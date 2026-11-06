@@ -170,7 +170,6 @@ export default function PortfolioEditor({ data, replaceData, uploadImage }: Prop
   return (
     <div className="pdf-covers">
       <input ref={input} type="file" accept="image/*" onChange={onFile} style={{ display: 'none' }} />
-      <span className="drive-label">Portfolio PDF, page par page</span>
 
       <div className="pf-list">
         {sheets.map((s, i) => (
@@ -280,7 +279,7 @@ export default function PortfolioEditor({ data, replaceData, uploadImage }: Prop
         </>
       )}
 
-      <p className="drive-hint">Cliquez sur un bloc pour le déplacer ; le carré rose l'agrandit. Le premier carré des aplats est la couleur d'origine. Pensez à « Enregistrer ».</p>
+      <p className="drive-hint">Cliquez sur un bloc pour le déplacer ; le carré rose l'agrandit. Le premier carré des aplats est la couleur d'origine. Pensez à « Sauvegarder ».</p>
       <button type="button" className="btn btn-outline btn-sm" onClick={() => {
         if (confirm('Revenir au portfolio d’origine ? Toutes les modifications de pages seront perdues.')) { save({ sheets: undefined, aplat: undefined }); setSelected(null); }
       }}>Revenir au portfolio d'origine</button>

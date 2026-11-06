@@ -68,7 +68,7 @@ export default function PdfCovers({ data, replaceData, uploadImage }: Props) {
           </div>
         );
       })}
-      <p className="drive-hint">Pensez à cliquer sur « Enregistrer » pour garder votre choix.</p>
+      <p className="drive-hint">Pensez à cliquer sur « Sauvegarder » pour garder votre choix.</p>
     </div>
   );
 }

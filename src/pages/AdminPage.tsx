@@ -13,7 +13,17 @@ import CataloguesPanel from '../components/CataloguesPanel';
 import PortfolioEditor from '../components/PortfolioEditor';
 import AddWork from '../components/AddWork';
 
-type Section = 'home' | 'profile' | 'artworks' | 'fresques' | 'news' | 'portfolio' | 'menu' | 'notifications' | 'theme' | 'tools';
+type Section = 'dashboard' | 'artworks' | 'fresques' | 'news' | 'invites' | 'pdf' | 'profile' | 'home' | 'portfolio' | 'menu' | 'theme' | 'tools';
+
+/** Réglages rarement utiles : rangés à part pour garder l'essentiel en vue. */
+const ADVANCED: { id: Section; label: string }[] = [
+  { id: 'home', label: 'Accueil du site' },
+  { id: 'portfolio', label: 'Page Atelier' },
+  { id: 'menu', label: 'Menu' },
+  { id: 'theme', label: 'Thème' },
+  { id: 'tools', label: 'Sauvegarde et outils' },
+];
+const LAST_SECTION = 'ads-admin-section';
 
 export default function AdminPage() {
   const {
@@ -48,7 +58,15 @@ export default function AdminPage() {
     }
   }, [uploadImage]);
 
-  const [activeSection, setActiveSection] = useState<Section>('profile');
+  const [activeSection, setSection] = useState<Section>(() => {
+    try { return (sessionStorage.getItem(LAST_SECTION) as Section) || 'dashboard'; } catch { return 'dashboard'; }
+  });
+  const setActiveSection = (id: Section) => {
+    setSection(id);
+    try { sessionStorage.setItem(LAST_SECTION, id); } catch { /* rien */ }
+    window.scrollTo(0, 0);
+  };
+  const [workSearch, setWorkSearch] = useState('');
 
   // ── PDF à jour ──
   const [pdfBusy, setPdfBusy] = useState<string | null>(null);
@@ -71,6 +89,12 @@ export default function AdminPage() {
       setPdfBusy(null);
     }
   };
+  useEffect(() => {
+    if (!hasUnsaved) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [hasUnsaved]);
   const [editingArtwork, setEditingArtwork] = useState<string | null>(null);
   const [editingNews, setEditingNews] = useState<string | null>(null);
   const [editingPortfolio, setEditingPortfolio] = useState<string | null>(null);
@@ -78,17 +102,23 @@ export default function AdminPage() {
 
   const fresquesCount = data.artworks.filter(a => a.category === 'fresque').length;
   const storeCount = data.artworks.filter(a => a.category !== 'fresque').length;
+  const toComplete = data.artworks.filter(a => a.draft).length + data.news.filter(n => n.draft).length;
   const sections: { id: Section; label: string; count?: number }[] = [
-    { id: 'home', label: 'Accueil' },
-    { id: 'profile', label: 'Profil' },
-    { id: 'artworks', label: 'Store', count: storeCount },
+    { id: 'dashboard', label: 'Accueil' },
+    { id: 'artworks', label: 'Œuvres', count: storeCount },
     { id: 'fresques', label: 'Fresques', count: fresquesCount },
     { id: 'news', label: 'Journal', count: data.news.length },
-    { id: 'portfolio', label: 'Atelier', count: (data.portfolio || []).length },
-    { id: 'menu', label: 'Menu' },
-    { id: 'notifications', label: 'Notifs' },
-    { id: 'theme', label: 'Thème' },
-    { id: 'tools', label: 'Outils' },
+    { id: 'invites', label: 'Invités' },
+    { id: 'pdf', label: 'PDF' },
+    { id: 'profile', label: 'Mon profil' },
+  ];
+  const tasks: { id: Section; title: string; text: string }[] = [
+    { id: 'artworks', title: 'Ajouter une œuvre', text: toComplete ? `${toComplete} fiche${toComplete > 1 ? 's' : ''} à compléter` : 'Toiles, papiers, sérigraphies' },
+    { id: 'fresques', title: 'Mes fresques', text: `${fresquesCount} fresques, sur la carte du site` },
+    { id: 'news', title: 'Écrire une actualité', text: 'Le journal du site' },
+    { id: 'invites', title: 'Envoyer une invitation', text: 'Invités, groupes, e-mails' },
+    { id: 'pdf', title: 'Portfolio et catalogues', text: 'Modifier, télécharger, partager' },
+    { id: 'profile', title: 'Mon profil', text: 'Biographie, parcours, contact' },
   ];
 
   // ── Handlers ──
@@ -201,75 +231,23 @@ export default function AdminPage() {
     <div className="page" id="admin-page" style={{ paddingBottom: '100px' }}>
       <div className="page-header">
         <h1>Administration</h1>
-        <p>Gérez tout le contenu de votre site</p>
+        <p>{user?.email} · <a href="/" target="_blank" rel="noopener noreferrer">Voir le site</a> · <button type="button" className="admin-link" onClick={() => signOut(auth)}>Se déconnecter</button></p>
       </div>
 
-      <AddWork data={data} save={save} uploadImage={uploadImage} />
-
-      {/* Drive partagé + fiches à compléter */}
-      <DrivePanel data={data} replaceData={replaceData} save={save}
-        updateArtwork={updateArtwork} updateNews={updateNews} />
-      <InvitesPanel data={data} replaceData={replaceData} />
-
-      {/* PDF générés à partir du contenu actuel (enregistré ou non) */}
-      <div className="admin-pdf-bar">
-        <button className="btn btn-outline btn-sm" disabled={pdfBusy !== null} onClick={() => exportPdf('catalogue')}>
-          <Download size={13} /> {pdfBusy === 'catalogue' ? 'Préparation…' : 'Catalogue PDF à jour'}
-        </button>
-        <button className="btn btn-outline btn-sm" disabled={pdfBusy !== null} onClick={() => exportPdf('portfolio')}>
-          <Download size={13} /> {pdfBusy === 'portfolio' ? 'Préparation…' : 'Portfolio PDF à jour'}
-        </button>
-        {(['catalogue', 'portfolio'] as const).flatMap(kind => [14, 10].map(limit => (
-          <button key={`${kind}${limit}`} className="btn btn-outline btn-sm" disabled={pdfBusy !== null} onClick={() => exportPdf(kind, limit)}>
-            <Download size={13} /> {pdfBusy === `${kind}${limit}` ? 'Préparation…' : `${kind === 'catalogue' ? 'Catalogue' : 'Portfolio'}, moins de ${limit} Mo`}
-          </button>
-        )))}
-        {pdfDone && <p className="drive-hint" role="status">{pdfDone}</p>}
-      </div>
-      <PdfCovers data={data} replaceData={replaceData} uploadImage={uploadImage} />
-      <CataloguesPanel data={data} save={save} />
-      <PortfolioEditor data={data} replaceData={replaceData} uploadImage={uploadImage} />
-
-      {/* Section tabs */}
-      <div style={{
-        display: 'flex', gap: '6px', padding: '0 16px', overflowX: 'auto',
-        marginBottom: '24px', flexWrap: 'nowrap',
-      }}>
+      <nav className="admin-nav" aria-label="Rubriques de l'admin">
         {sections.map(s => (
-          <button
-            key={s.id}
-            onClick={() => setActiveSection(s.id)}
-            className={`btn btn-sm ${activeSection === s.id ? 'btn-primary' : 'btn-outline'}`}
-            style={{ whiteSpace: 'nowrap', fontSize: '0.72rem' }}
-          >
+          <button key={s.id} type="button" onClick={() => setActiveSection(s.id)} aria-current={activeSection === s.id ? 'page' : undefined}
+            className={`btn btn-sm ${activeSection === s.id ? 'btn-primary' : 'btn-outline'}`}>
             {s.label}
-            {s.count !== undefined && (
-              <span style={{
-                marginLeft: '4px', fontSize: '0.6rem',
-                opacity: 0.6,
-              }}>
-                {s.count}
-              </span>
-            )}
+            {s.count !== undefined && <span className="admin-nav-count">{s.count}</span>}
           </button>
         ))}
-      </div>
+      </nav>
 
         {/* ── Floating Save Bar ── */}
         {hasUnsaved && (
-          <div style={{
-            position: 'sticky', top: '60px', zIndex: 100,
-            padding: '10px 16px',
-            background: 'rgba(10,10,10,0.95)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            borderBottom: '1px solid rgba(201,160,144,0.2)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            gap: '12px',
-          }}>
-            <span style={{ fontSize: '0.72rem', color: 'var(--color-accent)', fontWeight: 500 }}>
-              ● Modifications non sauvegardées
-            </span>
+          <div className="admin-save-bar">
+            <span>Modifications à sauvegarder</span>
             <button
               className="btn btn-primary btn-sm"
               onClick={() => save()}
@@ -290,10 +268,71 @@ export default function AdminPage() {
 
       <div className="page-content" style={{ padding: '0 16px' }}>
 
+        {activeSection === 'dashboard' && (
+          <div className="admin-section animate-in">
+            <h2 className="admin-section-title">Que voulez-vous faire ?</h2>
+            <div className="admin-tasks">
+              {tasks.map(t => (
+                <button key={t.id} type="button" className="admin-task" onClick={() => setActiveSection(t.id)}>
+                  <strong>{t.title}</strong>
+                  <span>{t.text}</span>
+                </button>
+              ))}
+            </div>
+            <span className="drive-label">Réglages avancés</span>
+            <div className="admin-subnav">
+              {ADVANCED.map(a => <button key={a.id} type="button" className="admin-link" onClick={() => setActiveSection(a.id)}>{a.label}</button>)}
+            </div>
+          </div>
+        )}
+
+        {ADVANCED.some(a => a.id === activeSection) && (
+          <div className="admin-subnav" style={{ marginBottom: 20 }}>
+            {ADVANCED.map(a => (
+              <button key={a.id} type="button" className="admin-link" aria-current={activeSection === a.id ? 'page' : undefined} onClick={() => setActiveSection(a.id)}>{a.label}</button>
+            ))}
+          </div>
+        )}
+
+        {activeSection === 'invites' && (
+          <div className="admin-section animate-in">
+            <InvitesPanel data={data} replaceData={replaceData} />
+            <NotificationsSection />
+          </div>
+        )}
+
+        {activeSection === 'pdf' && (
+          <div className="admin-section animate-in">
+            <h2 className="admin-section-title">Télécharger un PDF à jour</h2>
+            <p className="drive-hint">La version complète est la plus belle. Les versions légères passent par e-mail. Les PDF contiennent les prix.</p>
+            <div className="admin-downloads">
+              {(['portfolio', 'catalogue'] as const).map(kind => (
+                <div key={kind}>
+                  <span className="drive-label">{kind === 'portfolio' ? 'Portfolio' : 'Catalogue'}</span>
+                  <div className="pf-actions">
+                    {[undefined, 14, 10].map(limit => (
+                      <button key={limit ?? 'full'} className="btn btn-outline btn-sm" disabled={pdfBusy !== null} onClick={() => exportPdf(kind, limit)}>
+                        <Download size={13} /> {pdfBusy === `${kind}${limit ?? ''}` ? 'Préparation…' : limit ? `Moins de ${limit} Mo` : 'Complet'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {pdfDone && <p className="drive-hint" role="status">{pdfDone}</p>}
+            </div>
+            <h2 className="admin-section-title">Modifier le portfolio</h2>
+            <PortfolioEditor data={data} replaceData={replaceData} uploadImage={uploadImage} />
+            <h2 className="admin-section-title">Catalogues d'expo</h2>
+            <CataloguesPanel data={data} save={save} />
+            <h2 className="admin-section-title">Couverture du catalogue</h2>
+            <PdfCovers data={data} replaceData={replaceData} uploadImage={uploadImage} />
+          </div>
+        )}
+
         {/* ════════ HOME NAV — REORDERABLE TILES ════════ */}
         {activeSection === 'home' && (
           <div className="admin-section animate-in">
-            <h2 className="admin-section-title">Tiles de l'accueil</h2>
+            <h2 className="admin-section-title">Accueil du site</h2>
             <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginBottom: '20px', fontWeight: 300 }}>
               Gérez l'ordre et l'apparence des slides du carousel. L'ordre ici correspond à l'ordre de navigation sur la home.
             </p>
@@ -440,7 +479,7 @@ export default function AdminPage() {
         {/* ════════ PROFILE ════════ */}
         {activeSection === 'profile' && (
           <div className="admin-section animate-in">
-            <h2 className="admin-section-title">Profil de l'artiste</h2>
+            <h2 className="admin-section-title">Mon profil</h2>
 
             {/* Hero Banner Upload */}
             <h3 className="admin-subsection" style={{ marginTop: 0 }}>Bannière Hero</h3>
@@ -604,14 +643,18 @@ export default function AdminPage() {
         {/* ════════ ARTWORKS ════════ */}
         {activeSection === 'artworks' && (
           <div className="admin-section animate-in">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 className="admin-section-title" style={{ margin: 0 }}>Catalogue</h2>
-              <button className="btn btn-primary btn-sm" onClick={handleAddArtwork}>
-                <Plus size={14} /> Ajouter
+            <AddWork data={data} save={save} uploadImage={uploadImage} />
+            <DrivePanel data={data} replaceData={replaceData} save={save}
+              updateArtwork={updateArtwork} updateNews={updateNews} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '24px 0 12px' }}>
+              <h2 className="admin-section-title" style={{ margin: 0 }}>Mes œuvres</h2>
+              <button className="btn btn-outline btn-sm" onClick={handleAddArtwork}>
+                <Plus size={14} /> Fiche vide
               </button>
             </div>
+            <input className="admin-input" placeholder="Chercher une œuvre" aria-label="Chercher une œuvre" value={workSearch} onChange={e => setWorkSearch(e.target.value)} />
 
-            {data.artworks.map(artwork => (
+            {data.artworks.filter(a => a.category !== 'fresque' && a.title.toLowerCase().includes(workSearch.trim().toLowerCase())).map(artwork => (
               <div key={artwork.id} className="admin-card">
                 <div
                   className="admin-card-header"
@@ -863,7 +906,7 @@ export default function AdminPage() {
         {activeSection === 'portfolio' && (
           <div className="admin-section animate-in">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 className="admin-section-title" style={{ margin: 0 }}>Portfolio</h2>
+              <h2 className="admin-section-title" style={{ margin: 0 }}>Page Atelier</h2>
               <button className="btn btn-primary btn-sm" onClick={() => {
                 const id = String(Date.now());
                 addPortfolio({ id, title: 'Nouveau projet', description: '', images: [], link: '', category: '' });
@@ -1044,7 +1087,6 @@ export default function AdminPage() {
         )}
 
         {/* ════════ NOTIFICATIONS ════════ */}
-        {activeSection === 'notifications' && <NotificationsSection />}
 
         {/* ════════ THEME ════════ */}
         {activeSection === 'theme' && (
@@ -1256,7 +1298,7 @@ function NotificationsSection() {
     <div className="admin-section animate-in">
       <h2 className="admin-section-title">
         <Bell size={16} style={{ marginRight: '6px', verticalAlign: '-2px' }} />
-        Notifications Push
+        Notification de l'app
       </h2>
 
       {/* API Key config */}
