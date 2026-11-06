@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Plus, Trash2, Upload } from 'lucide-react';
+import { Pipette, Plus, Trash2, Upload } from 'lucide-react';
 import type { PortfolioPage, SiteData } from '../data/defaultData';
 
 interface Props {
@@ -19,6 +19,65 @@ const PLACES: [number, string][] = [
   [4, 'Après le parcours'], [6, 'Après les œuvres'], [17, 'Après les fresques'], [19, 'À la fin, avant le dos'],
 ];
 const EMPTY = { layout: 'pleine' as PortfolioPage['layout'], images: ['', ''], title: '', text: '', after: 17 };
+
+/** « #abc », « abc » ou « #aabbcc » → « #aabbcc » ; null tant que le code n'est pas complet. */
+function parseHex(text: string): string | null {
+  const m = text.trim().toLowerCase().match(/^#?([0-9a-f]{3}|[0-9a-f]{6})$/);
+  if (!m) return null;
+  return `#${m[1].length === 3 ? [...m[1]].map(c => c + c).join('') : m[1]}`;
+}
+
+/** Couleur du pixel cliqué sur l'image. */
+function pixelAt(e: React.MouseEvent<HTMLImageElement>): string {
+  const img = e.currentTarget;
+  const box = img.getBoundingClientRect();
+  const canvas = document.createElement('canvas');
+  canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(img, 0, 0);
+  const x = Math.floor(((e.clientX - box.left) / box.width) * img.naturalWidth);
+  const y = Math.floor(((e.clientY - box.top) / box.height) * img.naturalHeight);
+  const [r, g, b] = ctx.getImageData(x, y, 1, 1).data;
+  return `#${[r, g, b].map(v => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
+interface ColorFieldProps {
+  label: string;
+  swatches: string[];
+  value: string;
+  onChange: (color: string) => void;
+}
+
+/** Une couleur : pastilles, nuancier, code à taper, ou pipette sur sa palette. */
+function ColorField({ label, swatches, value, onChange }: ColorFieldProps) {
+  const [typing, setTyping] = useState<string | null>(null);
+  const [dropper, setDropper] = useState(false);
+  return (
+    <div>
+      <span className="drive-label">{label}</span>
+      <div className="pf-swatches">
+        {swatches.map((c, i) => (
+          <button key={c} type="button" className={`pf-swatch${value === c ? ' is-on' : ''}`}
+            style={{ background: c }} aria-label={i ? c : "Couleur d'origine"} onClick={() => onChange(c)} />
+        ))}
+        <input type="color" aria-label="Nuancier" value={value} onChange={e => onChange(e.target.value)} />
+        <input className="admin-input pf-hex" aria-label={`Code couleur : ${label}`} placeholder="#1d1aa8" spellCheck={false}
+          value={typing ?? value} onBlur={() => setTyping(null)}
+          onChange={e => {
+            setTyping(e.target.value);
+            const hex = parseHex(e.target.value);
+            if (hex) onChange(hex);
+          }} />
+        <button type="button" className={`btn btn-outline btn-sm${dropper ? ' is-on' : ''}`} aria-pressed={dropper}
+          onClick={() => setDropper(d => !d)}><Pipette size={13} /> Pipette</button>
+      </div>
+      {dropper && (
+        <img className="pf-palette" src="/portfolio/palette.webp" alt="Sa palette : cliquer pour prélever une couleur"
+          onClick={e => onChange(pixelAt(e))} />
+      )}
+    </div>
+  );
+}
 
 /** Admin : le portfolio reste le PDF d'Adrien ; on change ses couleurs et on y ajoute des pages. */
 export default function PortfolioEditor({ data, replaceData, uploadImage }: Props) {
@@ -56,18 +115,8 @@ export default function PortfolioEditor({ data, replaceData, uploadImage }: Prop
   };
 
   const colors = (label: string, key: 'aplat' | 'kraft', swatches: string[]) => (
-    <div>
-      <span className="drive-label">{label}</span>
-      <div className="pf-swatches">
-        {swatches.map((c, i) => (
-          <button key={c} type="button" className={`pf-swatch${(settings[key] ?? swatches[0]) === c ? ' is-on' : ''}`}
-            style={{ background: c }} aria-label={i ? c : "Couleur d'origine"}
-            onClick={() => save({ [key]: i ? c : undefined })} />
-        ))}
-        <input type="color" aria-label="Autre couleur" value={settings[key] ?? swatches[0]}
-          onChange={e => save({ [key]: e.target.value })} />
-      </div>
-    </div>
+    <ColorField label={label} swatches={swatches} value={settings[key] ?? swatches[0]}
+      onChange={c => save({ [key]: c === swatches[0] ? undefined : c })} />
   );
 
   const picker = (i: number, label: string) => (
