@@ -67,8 +67,8 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     if (seen < 2) merged.artworks = merged.artworks.map(a => ({ ...a, ...WORK_FIXES[a.id] }));
     if (seen < 3) merged.catalogueOnline = ''; // prix masqués : plus de PDF public
     if (seen < 4) merged.news = merged.news.map(n => (n.id === 'catalogue-2026' ? { ...n, content: CATALOGUE_NEWS } : n));
-    if (seen < 5 && !merged.news.some(n => n.id === 'les-jours-sans-vent')) {
-      merged.news = [...defaultSiteData.news.filter(n => n.id === 'les-jours-sans-vent'), ...merged.news];
+    if (seen < 6) {
+      merged.news = [...defaultSiteData.news.filter(n => n.id === 'les-jours-sans-vent'), ...merged.news.filter(n => n.id !== 'les-jours-sans-vent')];
     }
     merged.contentAdds = CONTENT_ADDS;
     // Merge profile sub-fields

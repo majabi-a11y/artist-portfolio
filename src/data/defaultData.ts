@@ -169,7 +169,7 @@ export interface SiteData {
  */
 export const CONTENT_VERSION = 2;
 /** Œuvres ajoutées après le premier enregistrement en ligne : injectées une fois, sans toucher au reste (SiteDataContext). */
-export const CONTENT_ADDS = 5;
+export const CONTENT_ADDS = 6;
 export const CATALOGUE_NEWS = 'Vingt-huit œuvres, de la nouvelle série « Les jours sans vent » aux toiles « On dirait le sud » et aux séries « Temps libre » et « Hors ligne ». À voir dans le catalogue.';
 /** Corrections d'Adrien sur des œuvres déjà enregistrées (version 2). */
 export const WORK_FIXES: Record<string, Partial<Artwork>> = {
@@ -369,8 +369,8 @@ Pour cette exposition, les deux artistes ont choisi de partir ensemble à Rosas,
 
 L’exposition est aussi l’occasion de découvrir un film documentaire réalisé par Adrien Vaucher, retraçant le voyage des artistes à Rosas et la poursuite de leur travail en atelier.
 
-Du mercredi au vendredi de 10h30 à 18h, le samedi de 15h à 18h30. Dimanche, lundi et mardi sur rendez-vous.`,
-      images: ['/journal/les-jours-sans-vent.webp', oeuvre('les-jours-sans-vent-1'), oeuvre('les-jours-sans-vent-3'), oeuvre('les-jours-sans-vent-4')],
+Entrée libre. Du mercredi au vendredi de 10h30 à 18h, le samedi de 15h à 18h30. Dimanche, lundi et mardi sur rendez-vous.`,
+      images: ['/journal/les-jours-sans-vent.webp', '/journal/ljsv-rosas-a.webp', '/journal/ljsv-rosas-b.webp', '/journal/ljsv-toile-a.webp', '/journal/ljsv-toile-b.webp'],
       category: 'exhibition',
       link: 'https://www.galerie-cilas.com',
       linkLabel: 'Le site de la Galerie Cilas',
