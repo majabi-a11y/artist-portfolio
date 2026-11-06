@@ -38,7 +38,7 @@ export default function InvitesPanel({ data, replaceData }: Props) {
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(body.error || `Erreur ${res.status}`);
-    return body as { html?: string; sent?: number };
+    return body as { html?: string; sent?: number; failed?: number };
   };
 
   // Aperçu du vrai e-mail, un instant après la dernière frappe
@@ -54,8 +54,8 @@ export default function InvitesPanel({ data, replaceData }: Props) {
     setSending(true);
     setStatus('');
     try {
-      const { sent } = await call(mode);
-      setStatus(mode === 'test' ? 'Test envoyé sur votre adresse.' : `Invitation envoyée à ${sent} invité${sent === 1 ? '' : 's'}.`);
+      const { sent, failed } = await call(mode);
+      setStatus(mode === 'test' ? 'Test envoyé sur votre adresse.' : `Invitation envoyée à ${sent} invité${sent === 1 ? '' : 's'}.${failed ? ` ${failed} envoi${failed > 1 ? 's' : ''} en échec : ne renvoyez pas à tous, écrivez-moi.` : ''}`);
     } catch (err) {
       setStatus(`Envoi impossible : ${err instanceof Error ? err.message : 'erreur inconnue'}`);
     } finally {

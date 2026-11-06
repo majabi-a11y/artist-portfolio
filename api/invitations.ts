@@ -1,4 +1,4 @@
-import { sendEmail, subscribe, welcomeEmail, mailReady } from './_mail.js';
+import { sendEmail, subscribe, welcomeEmail, withUnsubscribe, mailReady } from './_mail.js';
 
 /** Inscription à la liste « invitations aux expos » (sans passer par le formulaire de contact). */
 export async function POST(request: Request): Promise<Response> {
@@ -10,10 +10,10 @@ export async function POST(request: Request): Promise<Response> {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json(400);
   try {
     const source = body.source === 'google' ? 'google' : 'site';
-    await subscribe(email, name, source);
+    const jeton = await subscribe(email, name, source);
     // L'e-mail de bienvenue est un plus : son échec ne doit pas annuler l'inscription
     if (mailReady()) {
-      await sendEmail({ email, name }, 'Vous êtes sur la liste des invités', welcomeEmail(name))
+      await sendEmail({ email, name }, 'Vous êtes sur la liste des invités', withUnsubscribe(welcomeEmail(name), jeton))
         .catch(e => console.error('bienvenue', e));
     }
     return json(200);

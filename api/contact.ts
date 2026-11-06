@@ -14,7 +14,7 @@ export async function POST(request: Request): Promise<Response> {
   if (!name || !message || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json(400, 'Champs incomplets');
 
   try {
-    const subscribed = wantsInvites ? await subscribe(email, name, 'contact') : false;
+    const subscribed = wantsInvites ? (await subscribe(email, name, 'contact'), true) : false;
     // Gmail pas encore branché : le site ouvre la messagerie du visiteur à la place
     if (!mailReady()) return json(503, 'Envoi direct pas encore activé', { subscribed });
     await sendEmail({ email: contactTo(), name: 'Adrien Da Silva' }, `Site — ${subject} — ${name}`,

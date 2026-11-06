@@ -21,6 +21,8 @@ function env(name: string): string {
 let transport: nodemailer.Transporter | null = null;
 const mailer = () => (transport ??= nodemailer.createTransport({
   service: 'gmail',
+  pool: true,
+  maxConnections: 3,
   auth: { user: env('GMAIL_USER'), pass: env('GMAIL_APP_PASSWORD').replace(/\s/g, '') },
 }));
 
@@ -59,27 +61,64 @@ export async function adminEmail(idToken: string): Promise<string | null> {
   return user?.emailVerified && ADMIN_EMAILS.includes(email) ? email : null;
 }
 
-/** Adresses des invités, lues avec le jeton de l'admin (la base ne les donne qu'à lui). */
-export async function inviteEmails(idToken: string, group?: string): Promise<string[]> {
+export interface Invite { email: string; jeton?: string }
+
+/** Invités, lus avec le jeton de l'admin (la base ne les donne qu'à lui). */
+export async function inviteList(idToken: string, group?: string): Promise<Invite[]> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/adrien_da_silva_invites`, {
     method: 'POST',
     headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${idToken}`, 'content-type': 'application/json' },
     body: '{}',
   });
   if (!res.ok) throw new Error(`Supabase ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  const invites = (await res.json()) as { email: string; groupe?: string | null }[];
-  return invites.filter(i => !group || i.groupe === group).map(i => i.email);
+  const invites = (await res.json()) as (Invite & { groupe?: string | null })[];
+  return invites.filter(i => !group || i.groupe === group);
 }
 
-/** Invitation : les invités en copie cachée, personne ne voit les autres adresses. */
-export async function sendBcc(bcc: string[], subject: string, html: string, color: string) {
-  await mailer().sendMail({
-    from: { name: 'Adrien Da Silva', address: env('GMAIL_USER') },
-    to: env('GMAIL_USER'),
-    bcc,
-    subject,
-    html: paint(html, color),
+/** Retire l'invité qui porte ce jeton. */
+export async function unsubscribe(jeton: string) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/adrien_da_silva_desinscrire`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ p_jeton: jeton }),
   });
+  if (!res.ok) throw new Error(`Supabase ${res.status}: ${(await res.text()).slice(0, 200)}`);
+}
+
+/** Pied d'e-mail : le lien personnel, ou la réponse « stop » sans jeton. */
+export function withUnsubscribe(html: string, jeton?: string) {
+  const line = jeton
+    ? `<a href="${SITE_URL}/desinscription?t=${jeton}" style="color:#9a928c">Se désinscrire</a> en un clic.`
+    : 'Pour ne plus rien recevoir, répondez simplement « stop » à cet e-mail.';
+  return html.replaceAll(STOP, line);
+}
+
+/** Un e-mail par invité, chacun avec son lien : personne ne voit les autres adresses. */
+export async function sendInvitations(invites: Invite[], subject: string, html: string, color: string) {
+  let sent = 0;
+  const queue = [...invites];
+  const worker = async () => {
+    for (let invite = queue.shift(); invite; invite = queue.shift()) {
+      const oneClick = invite.jeton ? {
+        'List-Unsubscribe': `<${SITE_URL}/api/unsubscribe?t=${invite.jeton}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      } : undefined;
+      try {
+        await mailer().sendMail({
+          from: { name: 'Adrien Da Silva', address: env('GMAIL_USER') },
+          to: invite.email,
+          subject,
+          html: paint(withUnsubscribe(html, invite.jeton), color),
+          headers: oneClick,
+        });
+        sent++;
+      } catch (e) {
+        console.error('invitation', invite.email, e);
+      }
+    }
+  };
+  await Promise.all([worker(), worker(), worker()]);
+  return { sent, failed: invites.length - sent };
 }
 
 export async function sendEmail(to: { email: string; name?: string }, subject: string, rawHtml: string, replyTo?: { email: string; name?: string }, color?: string) {
@@ -93,15 +132,16 @@ export async function sendEmail(to: { email: string; name?: string }, subject: s
   });
 }
 
-/** Ajoute (ou met à jour) un invité. */
-export async function subscribe(email: string, name?: string, source: 'site' | 'contact' | 'google' = 'site'): Promise<boolean> {
+/** Ajoute (ou met à jour) un invité ; renvoie son jeton de désinscription. */
+export async function subscribe(email: string, name?: string, source: 'site' | 'contact' | 'google' = 'site'): Promise<string | undefined> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/adrien_da_silva_inscrire`, {
     method: 'POST',
     headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`, 'content-type': 'application/json' },
     body: JSON.stringify({ p_email: email, p_nom: name ?? null, p_source: source }),
   });
   if (!res.ok) throw new Error(`Supabase ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  return true;
+  const jeton = await res.json();
+  return typeof jeton === 'string' ? jeton : undefined;
 }
 
 export const contactTo = () => env('CONTACT_TO');
@@ -113,6 +153,7 @@ export const mailReady = () => Boolean(process.env.GMAIL_USER && process.env.GMA
 
 const ACCENT = '%%ACCENT%%';
 const ON = '%%ON%%';
+const STOP = '%%STOP%%';
 
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
@@ -163,7 +204,7 @@ export function welcomeEmail(name?: string) {
     Pour être prévenu au moment même, installez l'app : elle tient sur l'écran d'accueil de votre téléphone.</p>
   ${button(`${SITE_URL}/?bienvenue=invite`, "INSTALLER L'APP")}
   <p style="font:12px/1.6 Helvetica,Arial,sans-serif;margin:22px 0 0;color:#9a928c">
-    Pour ne plus rien recevoir, répondez simplement « stop » à cet e-mail.</p>
+    ${STOP}</p>
 </td></tr>`);
 }
 
@@ -176,7 +217,7 @@ export function invitationEmail(p: { title: string; message: string; image?: str
   <p style="font:15px/1.7 Helvetica,Arial,sans-serif;margin:0 0 22px;color:#3a3633">${esc(p.message).replace(/\n/g, '<br>')}</p>
   ${button(SITE_URL, 'VOIR LE SITE')}
   <p style="font:12px/1.6 Helvetica,Arial,sans-serif;margin:22px 0 0;color:#9a928c">
-    Pour ne plus rien recevoir, répondez simplement « stop » à cet e-mail.</p>
+    ${STOP}</p>
 </td></tr>`);
 }
 

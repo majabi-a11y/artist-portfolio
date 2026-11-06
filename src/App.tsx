@@ -11,6 +11,7 @@ const ArtworkDetailPage = lazy(() => import('./pages/ArtworkDetailPage'));
 const FilterPage = lazy(() => import('./pages/FilterPage'));
 const FresquesPage = lazy(() => import('./pages/FresquesPage'));
 const FresqueDetailPage = lazy(() => import('./pages/FresqueDetailPage'));
+const UnsubscribePage = lazy(() => import('./pages/UnsubscribePage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
@@ -165,6 +166,7 @@ function App() {
             <Route path="/journal" element={<NewsPage />} />
             <Route path="/portfolio" element={<PortfolioPage />} />
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="/desinscription" element={<UnsubscribePage />} />
             {/* QR code imprimé : ouvre directement la fenêtre « Installer l'app » */}
             <Route path="/app" element={<Navigate to="/?bienvenue=app" replace />} />
           </Routes>
