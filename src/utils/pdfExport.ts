@@ -2,13 +2,14 @@
  * PDF à jour, générés dans le navigateur depuis le contenu du site :
  *   - catalogue : une œuvre par page, mise en page choisie par Adrien
  *     (en-tête artiste / catalogue, légende sur une ligne : titre italique · technique · format · année · prix) ;
- *   - portfolio : le PDF d'Adrien à l'identique (public/portfolio), avec ses couleurs et ses pages ajoutées dans l'admin.
+ *   - portfolio : son portfolio 2026 refait en pages modifiables dans l'admin (data/portfolioPages.ts).
  * Polices libres (OFL) servies par le site : Cormorant Garamond italique, Outfit.
  */
-import { PDFDocument, rgb, type PDFFont, type PDFPage, type PDFImage } from 'pdf-lib';
+import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage, type PDFImage } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
-import type { SiteData, Artwork, PortfolioPage } from '../data/defaultData';
+import type { SiteData, Artwork } from '../data/defaultData';
 import { formatPrice, isPublished } from '../data/defaultData';
+import { APLAT, DEFAULT_SHEETS } from '../data/portfolioPages';
 
 const A4: [number, number] = [595.28, 841.89];
 const M = 50;
@@ -150,137 +151,67 @@ export async function buildCataloguePdf(data: SiteData): Promise<Blob> {
   return new Blob([(await doc.save()).slice()], { type: 'application/pdf' });
 }
 
-// ─── Portfolio : le PDF d'Adrien tel quel, ses couleurs et ses pages ajoutées ───
+// ─── Portfolio : les pages de l'admin (DEFAULT_SHEETS tant qu'Adrien n'a rien changé) ───
 
-const PORTFOLIO_SRC = '/portfolio/original.pdf';
-const AP = [40, 28, 66];     // violet de ses aplats (pages 2 et 4)
-const KRAFT = [205, 172, 127]; // kraft de la couverture et du dos (pages 1 et 20)
 const SHEET: [number, number] = [1190.55, 841.89];
+const LEAD = 1.3;
 
-const hexRgb = (hex: string) => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
-const lum = (c: number[]) => 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
+const toRgb = (hex: string) => rgb(...([1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number]));
+const isLight = (hex: string) => {
+  const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+  return 0.3 * r + 0.59 * g + 0.11 * b > 150;
+};
 
-/** Remplace le violet dans un rectangle ; le texte clair garde ses nuances, et passe au sombre sur une couleur claire. */
-function recolorAplat(px: Uint8ClampedArray, width: number, x1: number, y1: number, hex: string) {
-  const to = hexRgb(hex);
-  const text = lum(to) > 150 ? [20, 18, 26] : [245, 243, 240];
-  const base = lum(AP);
-  for (let y = 0; y < y1; y++) {
-    for (let x = 0; x < x1; x++) {
-      const i = (y * width + x) * 4;
-      const t = Math.min(1, Math.max(0, (lum([px[i], px[i + 1], px[i + 2]]) - base) / (205 - base)));
-      for (let c = 0; c < 3; c++) px[i + c] = to[c] + (text[c] - to[c]) * t;
-    }
-  }
-}
-
-/** Teinte le kraft sans perdre son grain ; le reste (blanc, image, QR, texte) ne bouge pas. */
-function recolorKraft(px: Uint8ClampedArray, hex: string) {
-  const to = hexRgb(hex);
-  const sum = KRAFT[0] + KRAFT[1] + KRAFT[2];
-  for (let i = 0; i < px.length; i += 4) {
-    const l = px[i] + px[i + 1] + px[i + 2];
-    if (l < sum * 0.5) continue;
-    const d = Math.abs(px[i] / l - KRAFT[0] / sum) + Math.abs(px[i + 2] / l - KRAFT[2] / sum);
-    const w = Math.min(1, Math.max(0, (0.09 - d) / 0.04));
-    if (!w) continue;
-    for (let c = 0; c < 3; c++) px[i + c] += (to[c] * (l / sum) - px[i + c]) * w;
-  }
-}
-
-async function bitmapOf(src: string): Promise<ImageBitmap> {
-  return createImageBitmap(await (await fetch(src)).blob());
-}
-
-/** Dessine une image recadrée sans déformation, centrée dans le rectangle. */
-function drawCover(ctx: CanvasRenderingContext2D, b: ImageBitmap, x: number, y: number, w: number, h: number) {
+/** Sans perte quand l'image a déjà le format du bloc ; sinon recadrée au centre, sans déformation. */
+async function embedBlock(doc: PDFDocument, src: string, ratio: number): Promise<PDFImage> {
+  const blob = await (await fetch(src)).blob();
+  const b = await createImageBitmap(blob);
+  if (blob.type === 'image/jpeg' && Math.abs(b.width / b.height / ratio - 1) < 0.015) return doc.embedJpg(await blob.arrayBuffer());
   let sw = b.width, sh = b.height;
-  if (sw / sh > w / h) sw = sh * (w / h); else sh = sw / (w / h);
+  if (sw / sh > ratio) sw = sh * ratio; else sh = sw / ratio;
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(sw); canvas.height = Math.round(sh);
+  const ctx = canvas.getContext('2d')!;
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(b, (b.width - sw) / 2, (b.height - sh) / 2, sw, sh, x, y, w, h);
-}
-
-async function canvasJpeg(doc: PDFDocument, canvas: HTMLCanvasElement): Promise<PDFImage> {
-  const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.92));
-  if (!blob) throw new Error('Image impossible à préparer');
-  return doc.embedJpg(await blob.arrayBuffer());
-}
-
-/** Une de ses pages, repeinte. Seules les pages 1, 2, 4 et 20 ont des aplats. */
-async function repaint(doc: PDFDocument, n: number, size: [number, number], data: SiteData) {
-  const { aplat, kraft } = data.portfolioPdf ?? {};
-  const b = await bitmapOf(`/portfolio/p${String(n).padStart(2, '0')}.jpg`);
-  const canvas = document.createElement('canvas');
-  canvas.width = b.width; canvas.height = b.height;
-  const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
-  ctx.drawImage(b, 0, 0);
-  const shot = ctx.getImageData(0, 0, b.width, b.height);
-  if (kraft && (n === 1 || n === 20)) recolorKraft(shot.data, kraft);
-  if (aplat && n === 2) recolorAplat(shot.data, b.width, Math.round(b.width * 0.4996), b.height, aplat);
-  if (aplat && n === 4) recolorAplat(shot.data, b.width, b.width, Math.round(b.height * 0.6864), aplat);
-  ctx.putImageData(shot, 0, 0);
-  const page = doc.addPage(size);
-  page.drawImage(await canvasJpeg(doc, canvas), { x: 0, y: 0, width: size[0], height: size[1] });
-}
-
-/** Image dans un rectangle de page (origine en bas à gauche, comme le PDF). */
-async function placeImage(doc: PDFDocument, page: PDFPage, src: string | undefined, x: number, y: number, w: number, h: number) {
-  if (!src) return;
-  const canvas = document.createElement('canvas');
-  const scale = Math.min(2400 / w, 2400 / h);
-  canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale);
-  drawCover(canvas.getContext('2d')!, await bitmapOf(src), 0, 0, canvas.width, canvas.height);
-  page.drawImage(await canvasJpeg(doc, canvas), { x, y, width: w, height: h });
-}
-
-/** Couverture ou 4e de couverture fournie par Adrien : la page entière, au format de l'image, sans recadrage. */
-async function fullPage(doc: PDFDocument, src: string) {
-  const b = await bitmapOf(src);
-  const [w, h] = [SHEET[0], (SHEET[0] * b.height) / b.width];
-  await placeImage(doc, doc.addPage([w, h]), src, 0, 0, w, h);
-}
-
-/** Page ajoutée dans l'admin, sur le modèle des siennes : fond blanc, petite légende. */
-async function addedPage(doc: PDFDocument, f: Fonts, p: PortfolioPage) {
-  const [W, H] = SHEET;
-  const page = doc.addPage(SHEET);
-  const size = 9.5, lead = 13;
-  const legend = (x: number, y: number, width: number) => {
-    const lines = [p.title.trim(), ...wrap(p.text.trim(), f.light, size, width)].filter(Boolean);
-    lines.forEach((line, i) => page.drawText(line, { x, y: y + (lines.length - 1 - i) * lead, size, font: f.light, color: INK }));
-  };
-  if (p.layout === 'pleine') {
-    await placeImage(doc, page, p.images[0], 0, 110, W, H - 110);
-    legend(56, 30, W * 0.5);
-  } else if (p.layout === 'moitie') {
-    await placeImage(doc, page, p.images[0], 0, 0, W / 2, H);
-    legend(W / 2 + 56, 56, W / 2 - 112);
-  } else {
-    await placeImage(doc, page, p.images[0], 0, 0, W * 0.66, H);
-    await placeImage(doc, page, p.images[1], W * 0.7, H * 0.36, W * 0.26, H * 0.5);
-    legend(W * 0.7, H * 0.2, W * 0.26);
-  }
+  ctx.drawImage(b, (b.width - sw) / 2, (b.height - sh) / 2, sw, sh, 0, 0, canvas.width, canvas.height);
+  const jpeg = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+  if (!jpeg) throw new Error('Image impossible à préparer');
+  return doc.embedJpg(await jpeg.arrayBuffer());
 }
 
 export async function buildPortfolioPdf(data: SiteData): Promise<Blob> {
-  const source = await PDFDocument.load(await (await fetch(PORTFOLIO_SRC)).arrayBuffer());
   const doc = await PDFDocument.create();
   doc.setTitle('Adrien Da Silva — Portfolio');
   doc.setAuthor('Adrien Da Silva');
-  const added = data.portfolioPdf?.pages ?? [];
-  const f = added.length ? await loadFonts(doc) : null;
-  const { aplat, kraft } = data.portfolioPdf ?? {};
-  const painted = new Set<number>([...(aplat ? [2, 4] : []), ...(kraft ? [1, 20] : [])]);
-  const full: Record<number, string | undefined> = { 1: data.pdfCovers?.portfolio, 20: data.pdfCovers?.portfolioDos };
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const [W, H] = SHEET;
+  const aplat = data.portfolioPdf?.aplat ?? APLAT;
+  // Helvetica ne connaît pas tous les signes (émojis…) : on écarte ceux qu'elle ne peut pas écrire
+  const safe = (t: string) => [...t].filter(c => {
+    try { font.encodeText(c); return true; } catch { return false; }
+  }).join('');
 
-  const copies = await doc.copyPages(source, source.getPageIndices());
-  for (let n = 1; n <= copies.length; n++) {
-    const { width, height } = copies[n - 1].getSize();
-    const whole = full[n];
-    if (whole) await fullPage(doc, whole);
-    else if (painted.has(n)) await repaint(doc, n, [width, height], data);
-    else doc.addPage(copies[n - 1]);
-    for (const p of added.filter(a => a.after === n)) await addedPage(doc, f!, p);
+  for (const sheet of (data.portfolioPdf?.sheets ?? DEFAULT_SHEETS).filter(s => !s.hidden)) {
+    const page = doc.addPage(SHEET);
+    const bg = sheet.bg === 'aplat' ? aplat : sheet.bg ?? '#ffffff';
+    page.drawRectangle({ x: 0, y: 0, width: W, height: H, color: toRgb(bg) });
+    for (const b of sheet.blocks) {
+      const x = (b.x / 100) * W, w = (b.w / 100) * W, top = H - (b.y / 100) * H;
+      if (b.kind === 'image') {
+        if (!b.src) continue;
+        const h = (b.h / 100) * H;
+        page.drawImage(await embedBlock(doc, b.src, w / h), { x, y: top - h, width: w, height: h });
+        continue;
+      }
+      const size = b.size ?? 10.5;
+      const color = toRgb(b.color ?? (isLight(bg) ? '#1a1a1a' : '#f5f3f0'));
+      const lines = (b.text ?? '').split('\n').map(safe).flatMap(l => (l.trim() ? wrap(l, font, size, w) : ['']));
+      lines.forEach((line, i) => {
+        const width = font.widthOfTextAtSize(line, size);
+        const dx = b.align === 'center' ? (w - width) / 2 : b.align === 'right' ? w - width : 0;
+        page.drawText(line, { x: x + dx, y: top - size - i * size * (b.lead ?? LEAD), size, font, color });
+      });
+    }
   }
 
   return new Blob([(await doc.save()).slice()], { type: 'application/pdf' });

@@ -110,14 +110,28 @@ export interface ThemeConfig {
   paletteId: string;
 }
 
-/** Page ajoutée au portfolio ; `after` = numéro de sa page d'origine qui la précède. */
-export interface PortfolioPage {
+/** Portfolio PDF : une page = un fond et des blocs posés librement (positions en % de la page). */
+export interface PfBlock {
   id: string;
-  layout: 'pleine' | 'moitie' | 'detail';
-  images: string[];
-  title: string;
-  text: string;
-  after: number;
+  kind: 'image' | 'text';
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  src?: string;
+  text?: string;
+  size?: number; // en points, sur une page de 1190 points de large
+  color?: string;
+  align?: 'left' | 'center' | 'right';
+  lead?: number; // interligne, 1.3 par défaut
+}
+
+export interface PfSheet {
+  id: string;
+  name: string;
+  bg?: string; // 'aplat' = la couleur commune des aplats ; sinon un code couleur (blanc par défaut)
+  hidden?: boolean;
+  blocks: PfBlock[];
 }
 
 export interface SiteData {
@@ -135,8 +149,8 @@ export interface SiteData {
   contentVersion?: number; // voir CONTENT_VERSION
   driveFolderUrl?: string; // dossier Drive partagé d'où viennent les nouvelles photos
   driveImported?: string[]; // identifiants des fichiers Drive déjà importés
-  pdfCovers?: { catalogue?: string; portfolio?: string; portfolioDos?: string }; // couvertures choisies dans l'admin (sinon automatiques)
-  portfolioPdf?: { aplat?: string; kraft?: string; pages?: PortfolioPage[] }; // réglages du portfolio PDF (sinon son PDF d'origine)
+  pdfCovers?: { catalogue?: string }; // couvertures choisies dans l'admin (sinon automatiques)
+  portfolioPdf?: { aplat?: string; sheets?: PfSheet[] }; // portfolio refait dans l'admin (sinon DEFAULT_SHEETS)
 }
 
 /**
@@ -291,6 +305,8 @@ export const defaultSiteData: SiteData = {
     { id: 'lignes-de-vies', serie: 'lignes-de-vies', title: 'Lignes de vies', year: 2025, technique: 'Acrylique sur toile', dimensions: '100 x 100 cm', signature: 'Signée au dos', price: '2000', description: 'Lignes de vie est une série de toiles représentant des éléments essentiels pour l\'artiste, comme la maison, l\'atelier ou l\'amour.', images: [oeuvre('lignes-de-vies')], category: 'toile', isFeatured: false, status: 'sold' },
 
     // ── Fresques (portfolio 2026) ──
+    { id: 'hors-lignes', coords: [43.8367, 4.3601], title: 'Hors lignes', year: 2026, technique: 'Fresque', dimensions: '', lieu: 'Résidence ADOMA, Nîmes', description: '', images: fresque('hors-lignes', 2), category: 'fresque', isFeatured: false, status: 'private' },
+    { id: 'paysage-lepic', coords: [43.616, 3.859], title: 'Paysage Lepic', year: 2026, technique: 'Fresque', dimensions: '', lieu: 'Résidence site EAI, Montpellier', description: '', images: fresque('paysage-lepic', 2), category: 'fresque', isFeatured: false, status: 'private' },
     { id: 'plein-sud-saint-roch', coords: [43.6034, 3.8796], title: 'Plein Sud — Saint Roch Social Club', year: 2022, technique: 'Fresque', dimensions: '1000 m²', lieu: 'Montpellier', description: 'Parasols, corps en mouvement, panorama figuratif et abstrait : l\'artiste joue sur les dimensions, les points de vue et les couleurs. Les traits se multiplient et l\'œil se pose naturellement sur les tons vifs et les contours vibrants. Cette fresque monumentale traite de l\'effervescence des lieux de passage et place la figure humaine au cœur d\'un récit abstrait, entièrement composé par la couleur.', images: fresque('plein-sud-saint-roch', 3), category: 'fresque', isFeatured: true, status: 'private' },
     { id: 'granholat', coords: [43.7613, 1.9893], title: 'Granholat', year: 2024, technique: 'Fresque', dimensions: '18 x 13 m', lieu: 'Médiathèque de Graulhet', description: 'Lauréat de l\'appel à projets de fresque pour la médiathèque de Graulhet, porté par l\'agglomération Gaillac Graulhet, l\'association Cisart et l\'association LineUp. Le récit s\'ancre dans l\'histoire de Graulhet, ancienne capitale du cuir née autour de sa rivière. La superposition des échelles révèle la magie fondatrice de ce cours d\'eau, à l\'origine de l\'activité et des usages quotidiens.', images: fresque('granholat', 2), category: 'fresque', isFeatured: true, status: 'private' },
     { id: 'raconte-moi-carnon', coords: [43.547, 3.98], title: 'Raconte-moi Carnon', technique: 'Fresque', dimensions: '18 x 11 m', lieu: 'Carnon, Mauguio', description: 'Projet culturel de la ville de Mauguio Carnon, fresque réalisée avec l\'association LineUp. Un visuel qui raconte l\'identité de Carnon par ses signes familiers : horizons, cabanes de pêcheurs, scènes de plage et mouvements de bateaux composent une mise en abyme du temps libre à Carnon.', images: fresque('raconte-moi-carnon', 1), category: 'fresque', isFeatured: true, status: 'private' },
