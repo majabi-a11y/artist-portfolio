@@ -37,11 +37,26 @@ async function loadFonts(doc: PDFDocument): Promise<Fonts> {
 }
 
 /** Image du site (WebP, PNG, JPEG) → JPEG haute qualité, 2000 px au plus, pour pdf-lib. */
-async function embedImage(doc: PDFDocument, src: string): Promise<PDFImage | null> {
+/** Poids d'un PDF : pixels sur le grand côté d'une image pleine page, et qualité JPEG. */
+interface Weight { px: number; quality: number }
+const FULL: Weight = { px: 2000, quality: 0.88 };
+const MAIL_STEPS: Weight[] = [{ px: 3000, quality: 0.88 }, { px: 2600, quality: 0.85 }, { px: 2200, quality: 0.82 }, { px: 1900, quality: 0.8 }, { px: 1600, quality: 0.74 }, { px: 1300, quality: 0.68 }, { px: 1000, quality: 0.6 }, { px: 800, quality: 0.5 }];
+
+/** Version allégée : la meilleure qualité qui reste sous `limit` Mo, avec un peu de marge. */
+export async function underWeight(build: (data: SiteData, weight: Weight) => Promise<Blob>, data: SiteData, limit: number): Promise<Blob> {
+  let blob = await build(data, MAIL_STEPS[0]);
+  for (const weight of MAIL_STEPS.slice(1)) {
+    if (blob.size <= (limit - 0.4) * 1e6) break;
+    blob = await build(data, weight);
+  }
+  return blob;
+}
+
+async function embedImage(doc: PDFDocument, src: string, weight: Weight = FULL): Promise<PDFImage | null> {
   try {
     const blob = await (await fetch(src)).blob();
     const bitmap = await createImageBitmap(blob);
-    const ratio = Math.min(1, 2000 / Math.max(bitmap.width, bitmap.height));
+    const ratio = Math.min(1, weight.px / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(bitmap.width * ratio);
     canvas.height = Math.round(bitmap.height * ratio);
@@ -49,7 +64,7 @@ async function embedImage(doc: PDFDocument, src: string): Promise<PDFImage | nul
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     bitmap.close();
-    const jpeg = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.88));
+    const jpeg = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', weight.quality));
     return jpeg ? doc.embedJpg(await jpeg.arrayBuffer()) : null;
   } catch {
     return null; // image introuvable : la page sort sans elle plutôt que d'échouer
@@ -111,7 +126,7 @@ function cover(doc: PDFDocument, f: Fonts, kind: string, year: number, img: PDFI
 
 const isStore = (a: Artwork) => a.category !== 'fresque' && isPublished(a);
 
-export async function buildCataloguePdf(data: SiteData): Promise<Blob> {
+export async function buildCataloguePdf(data: SiteData, weight: Weight = FULL): Promise<Blob> {
   const doc = await PDFDocument.create();
   doc.setTitle(`Adrien Da Silva — Catalogue d'œuvres`);
   doc.setAuthor('Adrien Da Silva');
@@ -122,12 +137,12 @@ export async function buildCataloguePdf(data: SiteData): Promise<Blob> {
 
   const featured = works.find(a => a.isFeatured && a.images?.[0]) ?? works.find(a => a.images?.[0]);
   const coverSrc = data.pdfCovers?.catalogue || featured?.images[0];
-  cover(doc, f, "CATALOGUE D'ŒUVRES", year, coverSrc ? await embedImage(doc, coverSrc) : null);
+  cover(doc, f, "CATALOGUE D'ŒUVRES", year, coverSrc ? await embedImage(doc, coverSrc, weight) : null);
 
   for (const [i, a] of works.entries()) {
     const page = newPage(doc);
     frame(page, f, "CATALOGUE D'ŒUVRES", '', i + 1);
-    const img = a.images?.[0] ? await embedImage(doc, a.images[0]) : null;
+    const img = a.images?.[0] ? await embedImage(doc, a.images[0], weight) : null;
     if (img) drawFitted(page, img, M + 20, 150, W - 2 * (M + 20), H - 110 - 150);
 
     // Légende sur une ligne, centrée
@@ -162,24 +177,25 @@ const isLight = (hex: string) => {
   return 0.3 * r + 0.59 * g + 0.11 * b > 150;
 };
 
-/** Sans perte quand l'image a déjà le format du bloc ; sinon recadrée au centre, sans déformation. */
-async function embedBlock(doc: PDFDocument, src: string, ratio: number): Promise<PDFImage> {
+/** Sans perte quand l'image a déjà le format du bloc ; sinon recadrée au centre, sans déformation. `share` : part de la page occupée. */
+async function embedBlock(doc: PDFDocument, src: string, ratio: number, share: number, weight?: Weight): Promise<PDFImage> {
   const blob = await (await fetch(src)).blob();
   const b = await createImageBitmap(blob);
-  if (blob.type === 'image/jpeg' && Math.abs(b.width / b.height / ratio - 1) < 0.015) return doc.embedJpg(await blob.arrayBuffer());
+  if (!weight && blob.type === 'image/jpeg' && Math.abs(b.width / b.height / ratio - 1) < 0.015) return doc.embedJpg(await blob.arrayBuffer());
   let sw = b.width, sh = b.height;
   if (sw / sh > ratio) sw = sh * ratio; else sh = sw / ratio;
   const canvas = document.createElement('canvas');
-  canvas.width = Math.round(sw); canvas.height = Math.round(sh);
+  const scale = weight ? Math.min(1, (weight.px * share) / Math.max(sw, sh)) : 1;
+  canvas.width = Math.round(sw * scale); canvas.height = Math.round(sh * scale);
   const ctx = canvas.getContext('2d')!;
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(b, (b.width - sw) / 2, (b.height - sh) / 2, sw, sh, 0, 0, canvas.width, canvas.height);
-  const jpeg = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+  const jpeg = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', weight?.quality ?? 0.92));
   if (!jpeg) throw new Error('Image impossible à préparer');
   return doc.embedJpg(await jpeg.arrayBuffer());
 }
 
-export async function buildPortfolioPdf(data: SiteData): Promise<Blob> {
+export async function buildPortfolioPdf(data: SiteData, weight?: Weight): Promise<Blob> {
   const doc = await PDFDocument.create();
   doc.setTitle('Adrien Da Silva — Portfolio');
   doc.setAuthor('Adrien Da Silva');
@@ -200,7 +216,7 @@ export async function buildPortfolioPdf(data: SiteData): Promise<Blob> {
       if (b.kind === 'image') {
         if (!b.src) continue;
         const h = (b.h / 100) * H;
-        page.drawImage(await embedBlock(doc, b.src, w / h), { x, y: top - h, width: w, height: h });
+        page.drawImage(await embedBlock(doc, b.src, w / h, Math.max(b.w, b.h) / 100, weight), { x, y: top - h, width: w, height: h });
         continue;
       }
       const size = b.size ?? 10.5;

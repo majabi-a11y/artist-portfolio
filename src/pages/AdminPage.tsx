@@ -50,14 +50,20 @@ export default function AdminPage() {
   const [activeSection, setActiveSection] = useState<Section>('profile');
 
   // ── PDF à jour ──
-  const [pdfBusy, setPdfBusy] = useState<'catalogue' | 'portfolio' | null>(null);
-  const exportPdf = async (kind: 'catalogue' | 'portfolio') => {
-    setPdfBusy(kind);
+  const [pdfBusy, setPdfBusy] = useState<string | null>(null);
+  const [pdfDone, setPdfDone] = useState('');
+  const exportPdf = async (kind: 'catalogue' | 'portfolio', limit?: number) => {
+    setPdfBusy(`${kind}${limit ?? ''}`);
+    setPdfDone('');
     try {
-      const { buildCataloguePdf, buildPortfolioPdf, downloadBlob } = await import('../utils/pdfExport');
-      const blob = kind === 'catalogue' ? await buildCataloguePdf(data) : await buildPortfolioPdf(data);
+      const { buildCataloguePdf, buildPortfolioPdf, underWeight, downloadBlob } = await import('../utils/pdfExport');
+      const build = kind === 'catalogue' ? buildCataloguePdf : buildPortfolioPdf;
+      const blob = limit ? await underWeight(build, data, limit) : await build(data);
       const date = new Date().toISOString().slice(0, 10);
-      downloadBlob(blob, `adrien-da-silva-${kind}-${date}.pdf`);
+      downloadBlob(blob, `adrien-da-silva-${kind}${limit ? `-${limit}mo` : ''}-${date}.pdf`);
+      const size = (blob.size / 1e6).toFixed(1).replace('.', ',');
+      const name = kind === 'catalogue' ? 'Catalogue' : 'Portfolio';
+      setPdfDone(`${name} : ${size} Mo${limit && blob.size > limit * 1e6 ? ` (au-dessus de ${limit} Mo : retirez des pages)` : ''}`);
     } catch (err) {
       alert(`Le PDF n'a pas pu être créé : ${err instanceof Error ? err.message : 'erreur inconnue'}`);
     } finally {
@@ -212,6 +218,12 @@ export default function AdminPage() {
         <button className="btn btn-outline btn-sm" disabled={pdfBusy !== null} onClick={() => exportPdf('portfolio')}>
           <Download size={13} /> {pdfBusy === 'portfolio' ? 'Préparation…' : 'Portfolio PDF à jour'}
         </button>
+        {(['catalogue', 'portfolio'] as const).flatMap(kind => [14, 10].map(limit => (
+          <button key={`${kind}${limit}`} className="btn btn-outline btn-sm" disabled={pdfBusy !== null} onClick={() => exportPdf(kind, limit)}>
+            <Download size={13} /> {pdfBusy === `${kind}${limit}` ? 'Préparation…' : `${kind === 'catalogue' ? 'Catalogue' : 'Portfolio'}, moins de ${limit} Mo`}
+          </button>
+        )))}
+        {pdfDone && <p className="drive-hint" role="status">{pdfDone}</p>}
       </div>
       <PdfCovers data={data} replaceData={replaceData} uploadImage={uploadImage} />
       <PortfolioEditor data={data} replaceData={replaceData} uploadImage={uploadImage} />
