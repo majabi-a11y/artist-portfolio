@@ -25,6 +25,12 @@ export const isStandalone = () =>
 export const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) ||
   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
+/** L'app est-elle déjà sur cet appareil ? Seul Chrome sur Android sait répondre (manifest : related_applications). */
+export async function isInstalled(): Promise<boolean> {
+  const nav = navigator as { getInstalledRelatedApps?: () => Promise<unknown[]> };
+  try { return ((await nav.getInstalledRelatedApps?.()) ?? []).length > 0; } catch { return false; }
+}
+
 /** Ouvre la fenêtre d'installation (Chrome, Edge, Android). Renvoie true si acceptée. */
 export async function promptInstall(): Promise<boolean> {
   if (!deferred) return false;
