@@ -8,6 +8,7 @@ import { TEXT_PALETTES } from '../App';
 import MultiImageUpload from '../components/MultiImageUpload';
 import DrivePanel from '../components/DrivePanel';
 import InvitesPanel from '../components/InvitesPanel';
+import PdfCovers from '../components/PdfCovers';
 
 type Section = 'home' | 'profile' | 'artworks' | 'fresques' | 'news' | 'portfolio' | 'menu' | 'notifications' | 'theme' | 'tools';
 
@@ -204,6 +205,7 @@ export default function AdminPage() {
           <Download size={13} /> {pdfBusy === 'portfolio' ? 'Préparation…' : 'Portfolio PDF à jour'}
         </button>
       </div>
+      <PdfCovers data={data} replaceData={replaceData} uploadImage={uploadImage} />
 
       {/* Section tabs */}
       <div style={{

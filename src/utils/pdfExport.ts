@@ -120,7 +120,8 @@ export async function buildCataloguePdf(data: SiteData): Promise<Blob> {
   const [W, H] = A4;
 
   const featured = works.find(a => a.isFeatured && a.images?.[0]) ?? works.find(a => a.images?.[0]);
-  cover(doc, f, "CATALOGUE D'ŒUVRES", year, featured ? await embedImage(doc, featured.images[0]) : null);
+  const coverSrc = data.pdfCovers?.catalogue || featured?.images[0];
+  cover(doc, f, "CATALOGUE D'ŒUVRES", year, coverSrc ? await embedImage(doc, coverSrc) : null);
 
   for (const [i, a] of works.entries()) {
     const page = newPage(doc);
@@ -160,7 +161,7 @@ export async function buildPortfolioPdf(data: SiteData): Promise<Blob> {
   const footer = `PORTFOLIO ${year}`;
   let n = 0;
 
-  const hero = data.profile.heroBanner || fresques[0]?.images?.[0];
+  const hero = data.pdfCovers?.portfolio || data.profile.heroBanner || fresques[0]?.images?.[0];
   cover(doc, f, 'PORTFOLIO', year, hero ? await embedImage(doc, hero) : null);
 
   // Bio

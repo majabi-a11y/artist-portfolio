@@ -2559,3 +2559,12 @@ textarea.admin-input {
 #ecrire { scroll-margin-top: calc(var(--header-height) + 16px); }
 .fresque-map .leaflet-tile-pane { filter: grayscale(1) sepia(0.12) contrast(0.92) brightness(1.04); }
 .invite-actions + .invite-perks { margin-top: 18px; }
+
+/* Admin : couvertures des PDF */
+.pdf-covers { display: flex; flex-direction: column; gap: 14px; margin: 0 16px 24px; padding: 16px; border: 1px solid rgba(var(--ink-rgb), 0.1); }
+.pdf-cover { display: grid; grid-template-columns: 72px 1fr; gap: 12px; }
+.pdf-cover-thumb { width: 72px; height: 96px; display: flex; align-items: center; justify-content: center; background: var(--color-dark-card); font-size: 0.62rem; color: var(--color-text-muted); }
+.pdf-cover-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.pdf-cover-fields { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.pdf-cover-fields select { width: 100%; }
+.pdf-covers .drive-hint { margin: 0; }
