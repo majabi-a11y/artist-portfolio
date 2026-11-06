@@ -41,7 +41,7 @@ export default function NewsPage() {
               return (
                 <article key={post.id} className="card" style={{ overflow: 'hidden' }}>
                   {imgs.length > 0 && (
-                    <ImageCarousel images={imgs} alt={post.title} height="280px" />
+                    <ImageCarousel images={imgs} alt={post.title} height="min(70vh, 460px)" fit="contain" />
                   )}
                   <div style={{ padding: '20px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>

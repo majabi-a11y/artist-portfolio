@@ -816,13 +816,15 @@ export default function AdminPage() {
                       onChange={v => updateNews(post.id, { linkLabel: v })} />
 
                     {/* News images (multi) */}
-                    <h3 className="admin-subsection" style={{ marginTop: '8px' }}>Images</h3>
+                    <h3 className="admin-subsection" style={{ marginTop: '8px' }}>Carrousel d'images</h3>
+                    <p className="drive-hint">Plusieurs images défilent dans l'actu ; les flèches changent leur ordre.</p>
                     <MultiImageUpload
                       images={post.images || ((post as any).image ? [(post as any).image] : [])}
-                      max={5}
+                      max={12}
                       folder={`news/${post.id}`}
                       onUpload={(file, folder) => uploadImage(file, folder)}
                       onChange={imgs => updateNews(post.id, { images: imgs })}
+                      library={data.artworks.filter(a => !a.draft).flatMap(a => a.images.map((src, k) => ({ src, title: `${a.title.trim()}${a.images.length > 1 ? ` (${k + 1})` : ''}` })))}
                     />
 
                     <button className="btn btn-sm" style={{ color: '#e53e3e', fontSize: '0.7rem', marginTop: '8px' }}

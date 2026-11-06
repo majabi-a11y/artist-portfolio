@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ImageViewer from './ImageViewer';
 import { thumb } from '../data/defaultData';
@@ -16,6 +16,7 @@ export default function ImageCarousel({ images, alt = '', height = '240px', clas
   const [current, setCurrent] = useState(0);
   const [viewerOpen, setViewerOpen] = useState(false);
   const count = images.length;
+  const touchX = useRef(0);
 
   if (count === 0) return null;
   if (count === 1) {
@@ -34,7 +35,12 @@ export default function ImageCarousel({ images, alt = '', height = '240px', clas
 
   return (
     <>
-      <div className={`img-carousel ${className}`} style={{ height, position: 'relative', overflow: 'hidden' }}>
+      <div className={`img-carousel ${className}`} style={{ height, position: 'relative', overflow: 'hidden' }}
+        onTouchStart={e => { touchX.current = e.touches[0].clientX; }}
+        onTouchEnd={e => {
+          const dx = e.changedTouches[0].clientX - touchX.current;
+          if (Math.abs(dx) > 40) setCurrent((current + (dx < 0 ? 1 : -1) + count) % count);
+        }}>
         {images.map((src, i) => (
           <img
             key={i}

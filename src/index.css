@@ -256,6 +256,10 @@ p {
 }
 
 .img-carousel:hover .img-carousel-arrow { opacity: 1; }
+@media (hover: none) { .img-carousel-arrow { opacity: 1; } } /* tablette, téléphone : pas de survol */
+.image-order { position: absolute; left: 0; right: 0; bottom: -22px; display: flex; justify-content: space-between; }
+.image-order button { padding: 2px 4px; border: 0; background: none; color: inherit; cursor: pointer; }
+.image-order button:disabled { opacity: 0.25; cursor: default; }
 .img-carousel-arrow-left { left: 8px; }
 .img-carousel-arrow-right { right: 8px; }
 
