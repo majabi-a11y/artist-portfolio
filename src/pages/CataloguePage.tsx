@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSiteData } from '../contexts/SiteDataContext';
 import type { Artwork } from '../data/defaultData';
-import { thumb, formatPrice, CATALOGUE_PDF, isPublished, SERIES } from '../data/defaultData';
+import { thumb, formatPrice, isPublished, onlineCatalogue, SERIES } from '../data/defaultData';
 import BackButton from '../components/BackButton';
 import { Search, Download } from 'lucide-react';
 
@@ -22,6 +22,7 @@ export default function CataloguePage() {
   // Planches : toutes les œuvres, par série (de la plus ancienne à la plus récente) ou par année
   const [view, setView] = useState<'toutes' | 'serie' | 'annee'>('serie');
 
+  const pdf = onlineCatalogue(data);
   const storeArtworks = useMemo(() => data.artworks.filter(a => a.category !== 'fresque' && isPublished(a)), [data.artworks]);
 
   // Seules les catégories présentes au catalogue deviennent des filtres.
@@ -105,10 +106,12 @@ export default function CataloguePage() {
       </div>
 
       <div className="catalogue-tools">
-        <a className="catalogue-pdf" href={CATALOGUE_PDF} download>
-          <Download size={14} strokeWidth={1.5} />
-          Catalogue PDF
-        </a>
+        {pdf && (
+          <a className="catalogue-pdf" href={pdf.url} download title={pdf.title}>
+            <Download size={14} strokeWidth={1.5} />
+            Catalogue PDF
+          </a>
+        )}
 
         <div className="catalogue-search">
           <Search size={15} strokeWidth={1.5} />

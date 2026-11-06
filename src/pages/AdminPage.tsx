@@ -9,6 +9,7 @@ import MultiImageUpload from '../components/MultiImageUpload';
 import DrivePanel from '../components/DrivePanel';
 import InvitesPanel from '../components/InvitesPanel';
 import PdfCovers from '../components/PdfCovers';
+import CataloguesPanel from '../components/CataloguesPanel';
 import PortfolioEditor from '../components/PortfolioEditor';
 import AddWork from '../components/AddWork';
 
@@ -226,6 +227,7 @@ export default function AdminPage() {
         {pdfDone && <p className="drive-hint" role="status">{pdfDone}</p>}
       </div>
       <PdfCovers data={data} replaceData={replaceData} uploadImage={uploadImage} />
+      <CataloguesPanel data={data} save={save} />
       <PortfolioEditor data={data} replaceData={replaceData} uploadImage={uploadImage} />
 
       {/* Section tabs */}

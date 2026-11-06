@@ -36,6 +36,17 @@ async function prepare(file: File): Promise<{ blob: Blob; ext: string; type: str
   return blob ? { blob, ext: 'webp', type: 'image/webp' } : { blob: file, ext: file.name.split('.').pop() || 'jpg', type: file.type };
 }
 
+/** Catalogue d'expo : le PDF tel quel, sans recompression. */
+export async function uploadPdf(file: File): Promise<string> {
+  if (!supabase) throw new Error('Stockage pas encore configuré (clé Supabase manquante).');
+  if (file.size > 50e6) throw new Error('PDF trop lourd : 50 Mo au plus.');
+  const base = file.name.replace(/\.[^.]+$/, '').normalize('NFKD').replace(/[^\w-]+/g, '-').slice(0, 60) || 'catalogue';
+  const path = `catalogues/${Date.now()}-${base}.pdf`;
+  const { error } = await supabase.storage.from(IMAGES_BUCKET).upload(path, file, { contentType: 'application/pdf', upsert: false });
+  if (error) throw error;
+  return supabase.storage.from(IMAGES_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
 export async function uploadToSupabase(file: File, folder: string): Promise<string> {
   if (!supabase) throw new Error('Stockage des photos pas encore configuré (clé Supabase manquante).');
   const { blob, ext, type } = await prepare(file);

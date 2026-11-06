@@ -110,6 +110,12 @@ export interface ThemeConfig {
   paletteId: string;
 }
 
+export interface CatalogueFile {
+  id: string;
+  title: string;
+  url: string;
+}
+
 /** Portfolio PDF : une page = un fond et des blocs posés librement (positions en % de la page). */
 export interface PfBlock {
   id: string;
@@ -149,6 +155,9 @@ export interface SiteData {
   contentVersion?: number; // voir CONTENT_VERSION
   driveFolderUrl?: string; // dossier Drive partagé d'où viennent les nouvelles photos
   driveImported?: string[]; // identifiants des fichiers Drive déjà importés
+  catalogues?: CatalogueFile[]; // catalogues d'expo gardés dans l'admin
+  catalogueOnline?: string; // celui que le site propose au téléchargement
+  contentAdds?: number; // voir CONTENT_ADDS
   mailColor?: string; // couleur de tous les e-mails, invitations et e-mails de service
   pdfCovers?: { catalogue?: string }; // couvertures choisies dans l'admin (sinon automatiques)
   portfolioPdf?: { aplat?: string; sheets?: PfSheet[] }; // portfolio refait dans l'admin (sinon DEFAULT_SHEETS)
@@ -159,6 +168,9 @@ export interface SiteData {
  * (elle contenait le contenu de démonstration) ; l'admin enregistre ensuite la version actuelle.
  */
 export const CONTENT_VERSION = 2;
+/** Œuvres ajoutées après le premier enregistrement en ligne : injectées une fois, sans toucher au reste (SiteDataContext). */
+export const CONTENT_ADDS = 1;
+export const ADDED_WORKS = ['les-jours-sans-vent-1', 'les-jours-sans-vent-2', 'les-jours-sans-vent-3', 'les-jours-sans-vent-4', 'ljsv', 'vue-sur-la-mer', 'midi', 'minuit', 'vita-lenta-serigraphie'];
 
 const oeuvre = (slug: string) => `/oeuvres/${slug}.webp`;
 const fresque = (slug: string, n: number) => Array.from({ length: n }, (_, i) => `/fresques/${slug}-${i + 1}.webp`);
@@ -175,6 +187,10 @@ export const formatPrice = (price: string) => {
 };
 
 /** Publié sur le site (les brouillons importés du Drive restent dans l'admin). */
+/** Le catalogue proposé au téléchargement sur le site. */
+export const onlineCatalogue = (data: SiteData): CatalogueFile | undefined =>
+  data.catalogues?.find(c => c.id === data.catalogueOnline) ?? data.catalogues?.[0];
+
 export const isPublished = (item: { draft?: boolean }) => !item.draft;
 
 /**
@@ -186,6 +202,7 @@ export const SERIES: { id: string; titre: string; texte?: string }[] = [
   { id: 'temps-libre', titre: 'Temps libre', texte: 'Ce temps libre si précieux : la flânerie d\'une balade en ville, les divagations de l\'esprit à la terrasse d\'un café.' },
   { id: 'lignes-de-vies', titre: 'Lignes de vies', texte: 'Des éléments essentiels pour l\'artiste, comme la maison, l\'atelier ou l\'amour.' },
   { id: 'on-dirait-le-sud', titre: 'On dirait le sud' },
+  { id: 'les-jours-sans-vent', titre: 'Les jours sans vent' },
 ];
 
 export const CATALOGUE_PDF = '/catalogue-adrien-da-silva-2026.pdf';
@@ -208,6 +225,12 @@ export function contactHref(label: string, value: string): string {
 // Œuvres et légendes : catalogue A.D. 2026 d'Adrien. Fresques : son portfolio 2026.
 export const defaultSiteData: SiteData = {
   contentVersion: CONTENT_VERSION,
+  contentAdds: CONTENT_ADDS,
+  catalogues: [
+    { id: 'catalogue-2026', title: 'Catalogue 2026', url: CATALOGUE_PDF },
+    { id: 'galerie-cilas-2026-11', title: 'Les jours sans vent, Galerie Cilas, novembre 2026', url: '/catalogues/galerie-cilas-novembre-2026.pdf' },
+  ],
+  catalogueOnline: 'catalogue-2026',
   profile: {
     name: 'Adrien Da Silva',
     tagline: 'Artiste peintre et muraliste — Montpellier',
@@ -284,6 +307,15 @@ export const defaultSiteData: SiteData = {
   },
   artworks: [
     // ── Catalogue 2026 (dans l'ordre du catalogue) ──
+    { id: 'les-jours-sans-vent-1', serie: 'les-jours-sans-vent', title: 'Les jours sans vent 1', year: 2026, technique: 'Acrylique sur toile', dimensions: '100 x 81 cm', price: '2000', description: '', images: [oeuvre('les-jours-sans-vent-1')], category: 'toile', isFeatured: false, status: 'available', exhibition: 'Galerie Cilas, novembre 2026' },
+    { id: 'les-jours-sans-vent-2', serie: 'les-jours-sans-vent', title: 'Les jours sans vent 2', year: 2026, technique: 'Acrylique sur toile', dimensions: '100 x 81 cm', price: '2000', description: '', images: [oeuvre('les-jours-sans-vent-2')], category: 'toile', isFeatured: false, status: 'available', exhibition: 'Galerie Cilas, novembre 2026' },
+    { id: 'les-jours-sans-vent-3', serie: 'les-jours-sans-vent', title: 'Les jours sans vent 3', year: 2026, technique: 'Acrylique sur toile', dimensions: '146 x 114 cm', price: '3500', description: '', images: [oeuvre('les-jours-sans-vent-3')], category: 'toile', isFeatured: false, status: 'available', exhibition: 'Galerie Cilas, novembre 2026' },
+    { id: 'les-jours-sans-vent-4', serie: 'les-jours-sans-vent', title: 'Les jours sans vent 4', year: 2026, technique: 'Acrylique sur toile', dimensions: '114 x 195 cm', price: '4600', description: '', images: [oeuvre('les-jours-sans-vent-4')], category: 'toile', isFeatured: false, status: 'available', exhibition: 'Galerie Cilas, novembre 2026' },
+    { id: 'ljsv', serie: 'les-jours-sans-vent', title: 'LJSV', year: 2026, technique: 'Acrylique sur toile', dimensions: '146 x 97 cm', price: '3000', description: '', images: [oeuvre('ljsv')], category: 'toile', isFeatured: false, status: 'available', exhibition: 'Galerie Cilas, novembre 2026' },
+    { id: 'vue-sur-la-mer', serie: 'les-jours-sans-vent', title: 'Vue sur la mer', year: 2026, technique: 'Huile sur bois', dimensions: '20 x 20 cm', price: '300 €/unité', description: '', images: [oeuvre('vue-sur-la-mer')], category: 'toile', isFeatured: false, status: 'available', exhibition: 'Galerie Cilas, novembre 2026' },
+    { id: 'midi', serie: 'les-jours-sans-vent', title: 'Midi', year: 2026, technique: 'Acrylique sur papier', dimensions: '65 x 50 cm', price: '850', description: '', images: [oeuvre('midi')], category: 'papier', isFeatured: false, status: 'available', exhibition: 'Galerie Cilas, novembre 2026' },
+    { id: 'minuit', serie: 'les-jours-sans-vent', title: 'Minuit', year: 2026, technique: 'Acrylique sur papier', dimensions: '65 x 50 cm', price: '850', description: '', images: [oeuvre('minuit')], category: 'papier', isFeatured: false, status: 'available', exhibition: 'Galerie Cilas, novembre 2026' },
+    { id: 'vita-lenta-serigraphie', serie: 'les-jours-sans-vent', title: 'Vita-lenta', year: 2026, technique: 'Sérigraphie, Éditions Studio Contraste, numérotée et signée, 40 exemplaires', dimensions: '70 x 50 cm', price: '150', description: '', images: [oeuvre('vita-lenta-serigraphie')], category: 'serigraphie', isFeatured: false, status: 'available', exhibition: 'Galerie Cilas, novembre 2026' },
     { id: 'on-dirait-le-sud-116-x-89', serie: 'on-dirait-le-sud', title: 'On dirait le sud', year: 2026, technique: 'Acrylique sur toile', dimensions: '116 x 89 cm', signature: 'Signée au dos', price: '2200', description: '', images: [oeuvre('on-dirait-le-sud-116-x-89')], category: 'toile', isFeatured: true, status: 'available' },
     { id: 'on-dirait-le-sud-146-x-97', serie: 'on-dirait-le-sud', title: 'On dirait le sud', year: 2026, technique: 'Acrylique sur toile', dimensions: '146 x 97 cm', signature: 'Signée au dos', price: '3000', description: '', images: [oeuvre('on-dirait-le-sud-146-x-97')], category: 'toile', isFeatured: true, status: 'available' },
     { id: 'deconnecte', serie: 'on-dirait-le-sud', title: 'Déconnecté', year: 2024, technique: 'Acrylique sur toile', dimensions: '150 x 150 cm', signature: 'Signée au dos', price: '4600', description: 'La composition saisit un flux de travailleurs pris dans la mécanique du quotidien. Les silhouettes avancent, chargées de leurs obligations, tandis que l\'horizon appelle ailleurs. En creux, la ville retient ceux qui ne rêvent que de temps libre au bord de la mer.', images: [oeuvre('deconnecte')], category: 'toile', isFeatured: true, status: 'available' },
