@@ -2,13 +2,13 @@
  * PDF à jour, générés dans le navigateur depuis le contenu du site :
  *   - catalogue : une œuvre par page, mise en page choisie par Adrien
  *     (en-tête artiste / catalogue, légende sur une ligne : titre italique · technique · format · année · prix) ;
- *   - portfolio : bio, parcours, fresques, contact.
+ *   - portfolio : le PDF d'Adrien à l'identique (public/portfolio), avec ses couleurs et ses pages ajoutées dans l'admin.
  * Polices libres (OFL) servies par le site : Cormorant Garamond italique, Outfit.
  */
 import { PDFDocument, rgb, type PDFFont, type PDFPage, type PDFImage } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
-import type { SiteData, Artwork } from '../data/defaultData';
-import { formatPrice, contactHref, isPublished } from '../data/defaultData';
+import type { SiteData, Artwork, PortfolioPage } from '../data/defaultData';
+import { formatPrice, isPublished } from '../data/defaultData';
 
 const A4: [number, number] = [595.28, 841.89];
 const M = 50;
@@ -150,82 +150,133 @@ export async function buildCataloguePdf(data: SiteData): Promise<Blob> {
   return new Blob([(await doc.save()).slice()], { type: 'application/pdf' });
 }
 
+// ─── Portfolio : le PDF d'Adrien tel quel, ses couleurs et ses pages ajoutées ───
+
+const PORTFOLIO_SRC = '/portfolio/original.pdf';
+const AP = [40, 28, 66];     // violet de ses aplats (pages 2 et 4)
+const KRAFT = [205, 172, 127]; // kraft de la couverture et du dos (pages 1 et 20)
+const SHEET: [number, number] = [1190.55, 841.89];
+
+const hexRgb = (hex: string) => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+const lum = (c: number[]) => 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
+
+/** Remplace le violet dans un rectangle ; le texte clair garde ses nuances, et passe au sombre sur une couleur claire. */
+function recolorAplat(px: Uint8ClampedArray, width: number, x1: number, y1: number, hex: string) {
+  const to = hexRgb(hex);
+  const text = lum(to) > 150 ? [20, 18, 26] : [245, 243, 240];
+  const base = lum(AP);
+  for (let y = 0; y < y1; y++) {
+    for (let x = 0; x < x1; x++) {
+      const i = (y * width + x) * 4;
+      const t = Math.min(1, Math.max(0, (lum([px[i], px[i + 1], px[i + 2]]) - base) / (205 - base)));
+      for (let c = 0; c < 3; c++) px[i + c] = to[c] + (text[c] - to[c]) * t;
+    }
+  }
+}
+
+/** Teinte le kraft sans perdre son grain ; le reste (blanc, image, QR, texte) ne bouge pas. */
+function recolorKraft(px: Uint8ClampedArray, hex: string) {
+  const to = hexRgb(hex);
+  const sum = KRAFT[0] + KRAFT[1] + KRAFT[2];
+  for (let i = 0; i < px.length; i += 4) {
+    const l = px[i] + px[i + 1] + px[i + 2];
+    if (l < sum * 0.5) continue;
+    const d = Math.abs(px[i] / l - KRAFT[0] / sum) + Math.abs(px[i + 2] / l - KRAFT[2] / sum);
+    const w = Math.min(1, Math.max(0, (0.09 - d) / 0.04));
+    if (!w) continue;
+    for (let c = 0; c < 3; c++) px[i + c] += (to[c] * (l / sum) - px[i + c]) * w;
+  }
+}
+
+async function bitmapOf(src: string): Promise<ImageBitmap> {
+  return createImageBitmap(await (await fetch(src)).blob());
+}
+
+/** Dessine une image recadrée sans déformation, centrée dans le rectangle. */
+function drawCover(ctx: CanvasRenderingContext2D, b: ImageBitmap, x: number, y: number, w: number, h: number) {
+  let sw = b.width, sh = b.height;
+  if (sw / sh > w / h) sw = sh * (w / h); else sh = sw / (w / h);
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(b, (b.width - sw) / 2, (b.height - sh) / 2, sw, sh, x, y, w, h);
+}
+
+async function canvasJpeg(doc: PDFDocument, canvas: HTMLCanvasElement): Promise<PDFImage> {
+  const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+  if (!blob) throw new Error('Image impossible à préparer');
+  return doc.embedJpg(await blob.arrayBuffer());
+}
+
+/** Une de ses pages, repeinte. Seules les pages 1, 2, 4 et 20 ont des aplats. */
+async function repaint(doc: PDFDocument, n: number, size: [number, number], data: SiteData) {
+  const { aplat, kraft } = data.portfolioPdf ?? {};
+  const b = await bitmapOf(`/portfolio/p${String(n).padStart(2, '0')}.jpg`);
+  const canvas = document.createElement('canvas');
+  canvas.width = b.width; canvas.height = b.height;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+  ctx.drawImage(b, 0, 0);
+  const shot = ctx.getImageData(0, 0, b.width, b.height);
+  if (kraft && (n === 1 || n === 20)) recolorKraft(shot.data, kraft);
+  if (aplat && n === 2) recolorAplat(shot.data, b.width, Math.round(b.width * 0.4996), b.height, aplat);
+  if (aplat && n === 4) recolorAplat(shot.data, b.width, b.width, Math.round(b.height * 0.6864), aplat);
+  ctx.putImageData(shot, 0, 0);
+  if (n === 1 && data.pdfCovers?.portfolio) {
+    const w = b.width, h = b.height;
+    drawCover(ctx, await bitmapOf(data.pdfCovers.portfolio), w * 0.2846, h * 0.4985, w * 0.2054, h * 0.2499);
+  }
+  const page = doc.addPage(size);
+  page.drawImage(await canvasJpeg(doc, canvas), { x: 0, y: 0, width: size[0], height: size[1] });
+}
+
+/** Image dans un rectangle de page (origine en bas à gauche, comme le PDF). */
+async function placeImage(doc: PDFDocument, page: PDFPage, src: string | undefined, x: number, y: number, w: number, h: number) {
+  if (!src) return;
+  const canvas = document.createElement('canvas');
+  const scale = Math.min(2400 / w, 2400 / h);
+  canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale);
+  drawCover(canvas.getContext('2d')!, await bitmapOf(src), 0, 0, canvas.width, canvas.height);
+  page.drawImage(await canvasJpeg(doc, canvas), { x, y, width: w, height: h });
+}
+
+/** Page ajoutée dans l'admin, sur le modèle des siennes : fond blanc, petite légende. */
+async function addedPage(doc: PDFDocument, f: Fonts, p: PortfolioPage) {
+  const [W, H] = SHEET;
+  const page = doc.addPage(SHEET);
+  const size = 9.5, lead = 13;
+  const legend = (x: number, y: number, width: number) => {
+    const lines = [p.title.trim(), ...wrap(p.text.trim(), f.light, size, width)].filter(Boolean);
+    lines.forEach((line, i) => page.drawText(line, { x, y: y + (lines.length - 1 - i) * lead, size, font: f.light, color: INK }));
+  };
+  if (p.layout === 'pleine') {
+    await placeImage(doc, page, p.images[0], 0, 110, W, H - 110);
+    legend(56, 30, W * 0.5);
+  } else if (p.layout === 'moitie') {
+    await placeImage(doc, page, p.images[0], 0, 0, W / 2, H);
+    legend(W / 2 + 56, 56, W / 2 - 112);
+  } else {
+    await placeImage(doc, page, p.images[0], 0, 0, W * 0.66, H);
+    await placeImage(doc, page, p.images[1], W * 0.7, H * 0.36, W * 0.26, H * 0.5);
+    legend(W * 0.7, H * 0.2, W * 0.26);
+  }
+}
+
 export async function buildPortfolioPdf(data: SiteData): Promise<Blob> {
+  const source = await PDFDocument.load(await (await fetch(PORTFOLIO_SRC)).arrayBuffer());
   const doc = await PDFDocument.create();
   doc.setTitle('Adrien Da Silva — Portfolio');
   doc.setAuthor('Adrien Da Silva');
-  const f = await loadFonts(doc);
-  const year = new Date().getFullYear();
-  const [W, H] = A4;
-  const fresques = data.artworks.filter(a => a.category === 'fresque' && isPublished(a));
-  const footer = `PORTFOLIO ${year}`;
-  let n = 0;
+  const added = data.portfolioPdf?.pages ?? [];
+  const f = added.length ? await loadFonts(doc) : null;
+  const { aplat, kraft } = data.portfolioPdf ?? {};
+  const painted = new Set<number>([
+    ...(aplat ? [2, 4] : []), ...(kraft ? [1, 20] : []), ...(data.pdfCovers?.portfolio ? [1] : []),
+  ]);
 
-  const hero = data.pdfCovers?.portfolio || data.profile.heroBanner || fresques[0]?.images?.[0];
-  cover(doc, f, 'PORTFOLIO', year, hero ? await embedImage(doc, hero) : null);
-
-  // Bio
-  {
-    const page = newPage(doc); frame(page, f, 'PORTFOLIO', footer, ++n);
-    spaced(page, 'BIOGRAPHIE', M, H - 130, f.sans, 9, INK, 2.4);
-    page.drawText(data.profile.tagline, { x: M, y: H - 152, size: 13, font: f.serif, color: MID });
-    let y = H - 195;
-    for (const para of data.profile.bio.filter(Boolean)) {
-      for (const line of wrap(para, f.light, 10.5, W - 2 * M)) {
-        page.drawText(line, { x: M, y, size: 10.5, font: f.light, color: INK }); y -= 17;
-      }
-      y -= 10;
-    }
-  }
-
-  // Parcours (sur une ou plusieurs pages)
-  if (data.profile.cvSections?.length) {
-    let page = newPage(doc); frame(page, f, 'PORTFOLIO', footer, ++n);
-    spaced(page, 'PARCOURS', M, H - 130, f.sans, 9, INK, 2.4);
-    let y = H - 170;
-    for (const s of data.profile.cvSections) {
-      const need = 24 + s.items.length * 15;
-      if (y - need < 80) { page = newPage(doc); frame(page, f, 'PORTFOLIO', footer, ++n); y = H - 130; }
-      page.drawText(s.title, { x: M, y, size: 15, font: f.serif, color: INK });
-      y -= 22;
-      for (const item of s.items) {
-        for (const line of wrap(item, f.light, 9.5, W - 2 * M - 14)) {
-          page.drawText(line, { x: M + 14, y, size: 9.5, font: f.light, color: MID }); y -= 14;
-        }
-      }
-      y -= 14;
-    }
-  }
-
-  // Une fresque par page : photo, titre, lieu · format · année, texte
-  for (const fr of fresques) {
-    const page = newPage(doc); frame(page, f, 'FRESQUES', footer, ++n);
-    const img = fr.images?.[0] ? await embedImage(doc, fr.images[0]) : null;
-    if (img) drawFitted(page, img, M, 330, W - 2 * M, H - 110 - 330);
-    page.drawText(fr.title.trim(), { x: M, y: 290, size: 18, font: f.serif, color: INK });
-    const meta = [fr.lieu, fr.dimensions, fr.year ? String(fr.year) : ''].filter(Boolean).join('   ·   ');
-    if (meta) page.drawText(meta, { x: M, y: 270, size: 8.5, font: f.sans, color: MID });
-    let y = 240;
-    for (const line of wrap(fr.description || '', f.light, 9.5, W - 2 * M)) {
-      if (y < 70) break;
-      page.drawText(line, { x: M, y, size: 9.5, font: f.light, color: INK }); y -= 15;
-    }
-  }
-
-  // Contact
-  {
-    const page = newPage(doc); frame(page, f, 'CONTACT', footer, ++n);
-    spaced(page, 'CONTACT', M, H - 130, f.sans, 9, INK, 2.4);
-    let y = H - 175;
-    const lines = [...data.profile.contact];
-    for (const c of lines) {
-      spaced(page, c.label.toUpperCase(), M, y, f.sans, 7, GREY, 1.4);
-      page.drawText(c.value, { x: M + 120, y, size: 10.5, font: f.light, color: INK });
-      const href = contactHref(c.label, c.value);
-      if (href.startsWith('http')) page.drawText(href.replace(/^https?:\/\//, ''), { x: M + 120, y: y - 13, size: 7.5, font: f.light, color: GREY });
-      y -= 40;
-    }
-    page.drawText(window.location.host, { x: M, y: y - 10, size: 10.5, font: f.serif, color: MID });
+  const copies = await doc.copyPages(source, source.getPageIndices());
+  for (let n = 1; n <= copies.length; n++) {
+    const { width, height } = copies[n - 1].getSize();
+    if (painted.has(n)) await repaint(doc, n, [width, height], data);
+    else doc.addPage(copies[n - 1]);
+    for (const p of added.filter(a => a.after === n)) await addedPage(doc, f!, p);
   }
 
   return new Blob([(await doc.save()).slice()], { type: 'application/pdf' });

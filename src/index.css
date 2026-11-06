@@ -2568,6 +2568,12 @@ textarea.admin-input {
 .pdf-cover-fields { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
 .pdf-cover-fields select { width: 100%; }
 .pdf-covers .drive-hint { margin: 0; }
+.pf-swatches { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pf-swatch { width: 28px; height: 28px; padding: 0; border: 1px solid rgba(var(--ink-rgb), 0.2); cursor: pointer; }
+.pf-swatch.is-on { outline: 2px solid var(--color-accent, #1d1aa8); outline-offset: 2px; }
+.pf-swatches input[type='color'] { width: 34px; height: 28px; padding: 0; border: 0; background: none; }
+.pf-form { display: flex; flex-direction: column; gap: 8px; }
+.pf-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 0.8rem; }
 .add-work-types { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 .add-work-types button { padding: 8px 12px; font: inherit; font-size: 0.7rem; color: var(--color-text-secondary); background: transparent; border: 1px solid rgba(var(--ink-rgb), 0.16); cursor: pointer; }
 .add-work-types button.active { color: var(--color-bg); background: var(--color-text); border-color: var(--color-text); }

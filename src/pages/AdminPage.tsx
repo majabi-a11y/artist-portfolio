@@ -9,6 +9,7 @@ import MultiImageUpload from '../components/MultiImageUpload';
 import DrivePanel from '../components/DrivePanel';
 import InvitesPanel from '../components/InvitesPanel';
 import PdfCovers from '../components/PdfCovers';
+import PortfolioEditor from '../components/PortfolioEditor';
 import AddWork from '../components/AddWork';
 
 type Section = 'home' | 'profile' | 'artworks' | 'fresques' | 'news' | 'portfolio' | 'menu' | 'notifications' | 'theme' | 'tools';
@@ -213,6 +214,7 @@ export default function AdminPage() {
         </button>
       </div>
       <PdfCovers data={data} replaceData={replaceData} uploadImage={uploadImage} />
+      <PortfolioEditor data={data} replaceData={replaceData} uploadImage={uploadImage} />
 
       {/* Section tabs */}
       <div style={{

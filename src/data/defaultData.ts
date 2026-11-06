@@ -110,6 +110,16 @@ export interface ThemeConfig {
   paletteId: string;
 }
 
+/** Page ajoutée au portfolio ; `after` = numéro de sa page d'origine qui la précède. */
+export interface PortfolioPage {
+  id: string;
+  layout: 'pleine' | 'moitie' | 'detail';
+  images: string[];
+  title: string;
+  text: string;
+  after: number;
+}
+
 export interface SiteData {
   profile: ArtistProfile;
   artworks: Artwork[];
@@ -126,6 +136,7 @@ export interface SiteData {
   driveFolderUrl?: string; // dossier Drive partagé d'où viennent les nouvelles photos
   driveImported?: string[]; // identifiants des fichiers Drive déjà importés
   pdfCovers?: { catalogue?: string; portfolio?: string }; // couvertures choisies dans l'admin (sinon automatiques)
+  portfolioPdf?: { aplat?: string; kraft?: string; pages?: PortfolioPage[] }; // réglages du portfolio PDF (sinon son PDF d'origine)
 }
 
 /**
