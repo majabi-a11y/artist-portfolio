@@ -3,6 +3,7 @@ import { useEffect, lazy, Suspense } from 'react';
 import { SiteDataProvider, useSiteData } from './contexts/SiteDataContext';
 import BottomNav from './components/BottomNav';
 import WelcomeSheet from './components/WelcomeSheet';
+import InstallNudge from './components/InstallNudge';
 
 // Lazy-loaded pages for better initial load performance
 const HomePage = lazy(() => import('./pages/HomePage'));
@@ -173,6 +174,7 @@ function App() {
         </Suspense>
         <BottomNav />
         <WelcomeSheet />
+        <InstallNudge />
       </BrowserRouter>
     </SiteDataProvider>
   );
