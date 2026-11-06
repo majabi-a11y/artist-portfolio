@@ -208,7 +208,7 @@ export default function AdminPage() {
       {/* Drive partagé + fiches à compléter */}
       <DrivePanel data={data} replaceData={replaceData} save={save}
         updateArtwork={updateArtwork} updateNews={updateNews} />
-      <InvitesPanel />
+      <InvitesPanel data={data} replaceData={replaceData} />
 
       {/* PDF générés à partir du contenu actuel (enregistré ou non) */}
       <div className="admin-pdf-bar">

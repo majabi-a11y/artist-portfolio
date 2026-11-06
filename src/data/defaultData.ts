@@ -149,6 +149,7 @@ export interface SiteData {
   contentVersion?: number; // voir CONTENT_VERSION
   driveFolderUrl?: string; // dossier Drive partagé d'où viennent les nouvelles photos
   driveImported?: string[]; // identifiants des fichiers Drive déjà importés
+  mailColor?: string; // couleur de tous les e-mails, invitations et e-mails de service
   pdfCovers?: { catalogue?: string }; // couvertures choisies dans l'admin (sinon automatiques)
   portfolioPdf?: { aplat?: string; sheets?: PfSheet[] }; // portfolio refait dans l'admin (sinon DEFAULT_SHEETS)
 }

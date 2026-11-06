@@ -44,7 +44,7 @@ interface ColorFieldProps {
 }
 
 /** Une couleur : pastilles, nuancier, code à taper, ou pipette sur la couverture. */
-function ColorField({ label, swatches, value, cover, used, onChange }: ColorFieldProps) {
+export function ColorField({ label, swatches, value, cover, used, onChange }: ColorFieldProps) {
   const [typing, setTyping] = useState<string | null>(null);
   const [dropper, setDropper] = useState(false);
   return (

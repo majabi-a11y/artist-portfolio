@@ -1,11 +1,66 @@
-import { useState } from 'react';
-import { Users, Copy, Check } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Users, Copy, Check, Send } from 'lucide-react';
+import type { SiteData } from '../data/defaultData';
+import { auth } from '../firebase';
 import { supabase } from '../supabase';
+import { ColorField } from './PortfolioEditor';
 
 interface Invite { email: string; nom: string | null; source: string; inscrit_le: string }
 
-/** Admin : liste des invités (inscrits depuis le site ou le formulaire) et copie des adresses pour Gmail. */
-export default function InvitesPanel() {
+interface Props {
+  data: SiteData;
+  replaceData: (next: SiteData) => void;
+}
+
+const COLORS = ['#1a1a1a', '#1d1aa8', '#ff5c9d', '#281c42'];
+const COVER = '/portfolio/p/01.jpg';
+
+/** Admin : liste des invités, envoi des invitations par le Gmail d'Adrien, couleur des e-mails. */
+export default function InvitesPanel({ data, replaceData }: Props) {
+  const color = data.mailColor ?? COLORS[0];
+  const [title, setTitle] = useState('');
+  const [message, setMessage] = useState('');
+  const [image, setImage] = useState('');
+  const [preview, setPreview] = useState('');
+  const [sending, setSending] = useState(false);
+  const [status, setStatus] = useState('');
+  const works = data.artworks.filter(a => !a.draft && a.images?.[0]);
+
+  const call = async (mode: 'preview' | 'test' | 'send') => {
+    const token = await auth.currentUser?.getIdToken();
+    if (!token) throw new Error('Connectez-vous pour envoyer.');
+    const res = await fetch('/api/invite-send', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ mode, title, message, image, color }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `Erreur ${res.status}`);
+    return body as { html?: string; sent?: number };
+  };
+
+  // Aperçu du vrai e-mail, un instant après la dernière frappe
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      call('preview').then(r => setPreview(r.html ?? '')).catch(() => { /* pas connecté : pas d'aperçu */ });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [title, message, image, color]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const send = async (mode: 'test' | 'send') => {
+    if (mode === 'send' && !confirm(`Envoyer « ${title} » à tous les invités ? Un e-mail envoyé ne peut pas être repris.`)) return;
+    setSending(true);
+    setStatus('');
+    try {
+      const { sent } = await call(mode);
+      setStatus(mode === 'test' ? 'Test envoyé sur votre adresse.' : `Invitation envoyée à ${sent} invité${sent === 1 ? '' : 's'}.`);
+    } catch (err) {
+      setStatus(`Envoi impossible : ${err instanceof Error ? err.message : 'erreur inconnue'}`);
+    } finally {
+      setSending(false);
+    }
+  };
+
   const [invites, setInvites] = useState<Invite[] | null>(null);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
@@ -56,6 +111,29 @@ export default function InvitesPanel() {
         </>
       )}
       {error && <p className="drive-error">{error}</p>}
+
+      <div className="pf-form" style={{ marginTop: 20 }}>
+        <span className="drive-label">Envoyer une invitation</span>
+        <input className="admin-input" placeholder="Titre : Vernissage le 12 décembre" maxLength={120} value={title} onChange={e => setTitle(e.target.value)} />
+        <textarea className="admin-input" rows={5} placeholder="Message : date, lieu, horaires…" maxLength={3000} value={message} onChange={e => setMessage(e.target.value)} />
+        <select className="admin-input" aria-label="Image de l'invitation" value={image} onChange={e => setImage(e.target.value)}>
+          <option value="">Sans image</option>
+          {works.map(a => <option key={a.id} value={a.images[0]}>{a.title.trim()}</option>)}
+        </select>
+        <ColorField label="Couleur des e-mails (invitations et e-mails automatiques)" swatches={COLORS} value={color} cover={COVER} used={[]}
+          onChange={c => replaceData({ ...data, mailColor: c })} />
+        <p className="drive-hint">La couleur s'applique aux e-mails automatiques après « Sauvegarder ».</p>
+        {preview && <iframe className="invite-preview" title="Aperçu de l'e-mail" srcDoc={preview} sandbox="" />}
+        <div className="pf-actions">
+          <button type="button" className="btn btn-outline btn-sm" disabled={sending || !title.trim() || !message.trim()} onClick={() => send('test')}>
+            <Send size={13} /> M'envoyer un test
+          </button>
+          <button type="button" className="btn btn-primary btn-sm" disabled={sending || !title.trim() || !message.trim()} onClick={() => send('send')}>
+            <Send size={13} /> {sending ? 'Envoi…' : 'Envoyer à tous les invités'}
+          </button>
+        </div>
+        {status && <p className="drive-hint" role="status">{status}</p>}
+      </div>
     </section>
   );
 }
