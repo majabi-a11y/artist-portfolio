@@ -11,6 +11,8 @@ interface Props {
   /** Proposer l'inscription (Google, ou e-mail en repli) */
   withEmail?: boolean;
   compact?: boolean;
+  /** Arrivée par le QR code : « Installer l'app » passe en premier */
+  installFirst?: boolean;
 }
 
 const JOINED = 'ads-invite';
@@ -21,7 +23,7 @@ const remember = () => { try { localStorage.setItem(JOINED, '1'); } catch { /* n
  * « Soyez de la prochaine expo » : invitations, installation de l'app, notifications.
  * Connecté avec Google : rien à taper. Sinon : un bouton Google, et l'e-mail seulement si on le préfère.
  */
-export default function InviteCard({ subscribed = false, withEmail = true, compact = false }: Props) {
+export default function InviteCard({ subscribed = false, withEmail = true, compact = false, installFirst = false }: Props) {
   const user = useVisitor();
   const [email, setEmail] = useState('');
   const [showEmail, setShowEmail] = useState(false);
@@ -63,12 +65,33 @@ export default function InviteCard({ subscribed = false, withEmail = true, compa
   const name = firstName(user);
   const done = state === 'done';
 
+  const actionsBlock = (
+    <>
+      {(canInstall || !notif) && (
+        <div className="invite-actions">
+          {canInstall && (
+            <button className="invite-btn" onClick={install}>
+              <Download size={15} strokeWidth={1.6} /> Installer l'app
+            </button>
+          )}
+          {!notif && 'Notification' in window && (
+            <button className="invite-btn is-ghost" onClick={async () => setNotif(await enableNotifications())}>
+              <Bell size={15} strokeWidth={1.6} /> Me prévenir des nouveautés
+            </button>
+          )}
+        </div>
+      )}
+    </>
+  );
+
   return (
     <section className={`invite-card ${compact ? 'is-compact' : ''}`}>
       <img src="/icons/icon-192.png" alt="" className="invite-sun" />
       <h3 className="invite-title">
         {done ? (name ? `${name}, vous êtes sur la liste des invités` : 'Vous êtes sur la liste des invités') : 'Soyez de la prochaine expo'}
       </h3>
+
+      {installFirst && actionsBlock}
 
       {!done && (
         <ul className="invite-perks">
@@ -104,20 +127,7 @@ export default function InviteCard({ subscribed = false, withEmail = true, compa
         <p className="invite-ok"><Check size={14} /> C'est noté.</p>
       )}
 
-      {(canInstall || !notif) && (
-        <div className="invite-actions">
-          {canInstall && (
-            <button className="invite-btn" onClick={install}>
-              <Download size={15} strokeWidth={1.6} /> Installer l'app
-            </button>
-          )}
-          {!notif && 'Notification' in window && (
-            <button className="invite-btn is-ghost" onClick={async () => setNotif(await enableNotifications())}>
-              <Bell size={15} strokeWidth={1.6} /> Me prévenir des nouveautés
-            </button>
-          )}
-        </div>
-      )}
+      {!installFirst && actionsBlock}
       {notif && <p className="invite-ok"><Check size={14} /> Notifications activées.</p>}
 
       {showIosSteps && (

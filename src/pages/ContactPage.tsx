@@ -4,13 +4,11 @@ import { ArrowUpRight } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import ContactForm, { type ContactSubject } from '../components/ContactForm';
 import { contactHref, formatPrice, whatsappLink } from '../data/defaultData';
-import { MessageCircle } from 'lucide-react';
 
 export default function ContactPage() {
   const { data } = useSiteData();
   const { profile } = data;
-  // WhatsApp a déjà son grand bouton plus bas : pas de doublon dans les coordonnées
-  const coordonnees = (profile.contact || []).filter(c => !(data.whatsapp && /whatsapp/i.test(c.label)));
+  const coordonnees = profile.contact || [];
   const [searchParams] = useSearchParams();
 
   // Build preset from URL params
@@ -50,8 +48,21 @@ export default function ContactPage() {
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
               {coordonnees.map((item, i) => {
-                const href = contactHref(item.label, item.value);
-                const isExternal = href.startsWith('http');
+                const message = whatsappMessage();
+                const base = contactHref(item.label, item.value);
+                const href = /atelier/i.test(item.label) ? null
+                  : base.startsWith('mailto:') ? '#ecrire'
+                  : /whatsapp/i.test(item.label) && data.whatsapp ? whatsappLink(data.whatsapp, message)
+                  : base;
+                const isExternal = !!href && href.startsWith('http');
+                if (!href) {
+                  return (
+                    <div key={i} className="contact-line">
+                      <span className="contact-line-label">{item.label}</span>
+                      <span className="contact-line-value">{item.value}</span>
+                    </div>
+                  );
+                }
 
                 return (
                   <a key={i} href={href}
@@ -75,17 +86,6 @@ export default function ContactPage() {
               })}
             </div>
           </div>
-        )}
-
-        {/* WhatsApp direct, message prérempli selon la demande */}
-        {data.whatsapp && (
-          <a className="whatsapp-cta" href={whatsappLink(data.whatsapp, whatsappMessage())} target="_blank" rel="noopener noreferrer">
-            <MessageCircle size={18} strokeWidth={1.6} />
-            <span>
-              <strong>Écrire sur WhatsApp</strong>
-              <small>Réponse directe d'Adrien</small>
-            </span>
-          </a>
         )}
 
         {/* Contact form */}
@@ -120,6 +120,7 @@ export default function ContactPage() {
             </div>
           )}
 
+          <div id="ecrire" />
           <ContactForm preset={getPreset()} contactEmail={data.contactEmail || 'adrien.enaer@gmail.com'} />
         </div>
       </div>

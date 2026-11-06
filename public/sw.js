@@ -1,4 +1,4 @@
-const CACHE_NAME = 'artist-portfolio-v3';
+const CACHE_NAME = 'artist-portfolio-v4';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',

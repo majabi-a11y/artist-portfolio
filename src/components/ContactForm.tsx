@@ -47,6 +47,7 @@ export default function ContactForm({ preset, contactEmail }: Props) {
     if (user?.email) { setEmail(user.email); setName(n => n || user.displayName || ''); }
   }, [user]);
 
+  const [useOtherEmail, setUseOtherEmail] = useState(false);
   const [sending, setSending] = useState(false);
   const [delivered, setDelivered] = useState(false);
   const [botcheck, setBotcheck] = useState(false); // champ piège invisible : coché = robot
@@ -55,7 +56,9 @@ export default function ContactForm({ preset, contactEmail }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user?.email && !useOtherEmail) { setError('Choisissez Google ou une adresse e-mail.'); return; }
     if (!name || !email || !details) { setError('Veuillez remplir tous les champs.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('Cette adresse e-mail ne semble pas valide.'); return; }
     setError('');
 
     // Envoi par le serveur du site : message à Adrien + e-mail de confirmation au visiteur
@@ -165,23 +168,29 @@ export default function ContactForm({ preset, contactEmail }: Props) {
           </span>
           <button type="button" onClick={() => { signOutVisitor(); setEmail(''); setName(''); }}>Changer</button>
         </div>
-      ) : (
-        <button type="button" className="contact-google" onClick={() => signInVisitor().catch(() => {})}>
-          Remplir avec mon compte Google
-        </button>
-      )}
+      ) : !useOtherEmail ? (
+        <div className="contact-who">
+          <p className="contact-form-label">Qui écrit ?</p>
+          <button type="button" className="invite-google" onClick={() => signInVisitor().catch(() => {})}>
+            <GoogleG /> Continuer avec Google
+          </button>
+          <button type="button" className="invite-alt" onClick={() => setUseOtherEmail(true)}>
+            ou avec une autre adresse e-mail
+          </button>
+        </div>
+      ) : null}
 
-      {!user?.email && <>
+      {!user?.email && useOtherEmail && <>
       <div className="contact-form-field">
         <label className="contact-form-label">Nom</label>
         <input type="text" value={name} onChange={e => setName(e.target.value)}
-          className="contact-form-input" placeholder="Votre nom" required />
+          className="contact-form-input" placeholder="Votre nom" autoComplete="name" required />
       </div>
 
       <div className="contact-form-field">
         <label className="contact-form-label">Email</label>
         <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-          className="contact-form-input" placeholder="votre@email.com" required />
+          className="contact-form-input" placeholder="votre@email.com" autoComplete="email" required />
       </div>
       </>}
 
@@ -209,5 +218,17 @@ export default function ContactForm({ preset, contactEmail }: Props) {
         {sending ? <><Loader2 size={14} className="spin" /> Envoi…</> : <><Send size={14} /> Envoyer</>}
       </button>
     </form>
+  );
+}
+
+/** Logo « G » de Google (couleurs officielles), à côté du bouton de connexion. */
+function GoogleG() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
+      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" />
+      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
+    </svg>
   );
 }

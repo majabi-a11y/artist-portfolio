@@ -27,7 +27,7 @@ export default function WelcomeSheet() {
     <div className="welcome-sheet" onClick={close}>
       <div className="welcome-sheet-body" onClick={e => e.stopPropagation()}>
         <button className="welcome-close" onClick={close} aria-label="Fermer"><X size={18} /></button>
-        <InviteCard subscribed={subscribed} withEmail={!subscribed} />
+        <InviteCard subscribed={subscribed} withEmail={!subscribed} installFirst={new URLSearchParams(location.search).get('bienvenue') === 'app'} />
       </div>
     </div>
   );

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSiteData } from '../contexts/SiteDataContext';
 import { MapPin } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import ImageCarousel from '../components/ImageCarousel';
+import FresqueMap from '../components/FresqueMap';
 import { isPublished } from '../data/defaultData';
 import { recordView } from '../lib/taste';
 
@@ -13,6 +14,16 @@ export default function FresquesPage() {
   const fresques = data.artworks.filter(a => a.category === 'fresque' && isPublished(a));
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = fresques.find(f => f.id === selectedId);
+  // Carte de toutes les fresques ; l'icône de lieu d'une fresque l'ouvre centrée sur elle
+  const [showMap, setShowMap] = useState(false);
+  const [focusId, setFocusId] = useState<string | null>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const openMap = (id: string | null) => {
+    setShowMap(true);
+    setFocusId(id);
+    requestAnimationFrame(() => mapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
+  const openFresque = useCallback((id: string) => setSelectedId(id), []);
 
   return (
     <div className="page-wrapper">
@@ -22,6 +33,12 @@ export default function FresquesPage() {
         <p className="page-subtitle" style={{ marginBottom: '32px' }}>
           {fresques.length} œuvres murales
         </p>
+        <button className="fresque-map-toggle" onClick={() => (showMap ? setShowMap(false) : openMap(null))}>
+          <MapPin size={14} /> {showMap ? 'Masquer la carte' : 'Voir sur la carte'}
+        </button>
+        <div ref={mapRef}>
+          {showMap && <FresqueMap fresques={fresques} focusId={focusId} onOpen={openFresque} />}
+        </div>
 
         {fresques.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -36,9 +53,9 @@ export default function FresquesPage() {
                   <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px 16px', fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>
                     <span>{fresque.year}</span>
                     {fresque.lieu && (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <button className="fresque-lieu" onClick={(e) => { e.stopPropagation(); openMap(fresque.id); }} aria-label={`Voir ${fresque.lieu} sur la carte`}>
                         <MapPin size={12} /> {fresque.lieu}
-                      </span>
+                      </button>
                     )}
                     {fresque.dimensions && <span>{fresque.dimensions}</span>}
                   </div>

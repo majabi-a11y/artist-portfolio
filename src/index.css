@@ -2525,3 +2525,37 @@ textarea.admin-input {
 .profile-contact dt { color: var(--color-text-muted); font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; }
 .profile-contact dd { margin: 0; color: var(--color-text); text-align: right; }
 .profile-contact a { color: inherit; text-decoration: none; border-bottom: 0.5px solid rgba(var(--ink-rgb), 0.3); }
+
+/* ========== FRESQUES : carte ========== */
+.fresque-map-toggle, .fresque-lieu {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--color-text);
+  cursor: pointer;
+}
+.fresque-map-toggle { margin: -18px 0 22px; font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; border-bottom: 0.5px solid rgba(var(--ink-rgb), 0.3); padding-bottom: 2px; }
+.fresque-lieu { font-size: 0.72rem; color: var(--color-text-muted); text-decoration: underline; text-decoration-color: rgba(var(--ink-rgb), 0.3); text-underline-offset: 3px; }
+.fresque-map-wrap { margin-bottom: 26px; }
+.fresque-map { height: min(62vh, 520px); border: 0.5px solid rgba(var(--ink-rgb), 0.18); background: var(--color-dark-card); z-index: 0; }
+.fresque-map-note { margin-top: 8px; font-size: 0.62rem; color: var(--color-text-muted); }
+.fresque-pin { width: 18px; height: 18px; border-radius: 50%; background: var(--color-outremer); border: 3px solid #f4f1ea; box-shadow: 0 0 0 1px rgba(29, 26, 168, 0.4); }
+.fresque-popup { display: flex; flex-direction: column; gap: 4px; font-family: var(--font-main); color: #1d1aa8; }
+.fresque-popup img { width: 100%; height: 110px; object-fit: cover; margin-bottom: 6px; }
+.fresque-popup strong { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 1.05rem; font-weight: 600; }
+.fresque-popup span { font-size: 0.7rem; opacity: 0.75; }
+.fresque-popup-links { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; }
+.fresque-popup-links button, .fresque-popup-links a { background: none; border: none; padding: 0; font: inherit; font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: #1d1aa8; cursor: pointer; text-decoration: underline; }
+.leaflet-container { font-family: var(--font-main); }
+.contact-line { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(var(--ink-rgb), 0.06); }
+.contact-line-label { font-size: 0.65rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.15em; }
+.contact-line-value { font-size: 0.82rem; color: var(--color-text); font-weight: 500; }
+.contact-who { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.contact-who .invite-google { background: #fff; }
+#ecrire { scroll-margin-top: calc(var(--header-height) + 16px); }
+.fresque-map .leaflet-tile-pane { filter: grayscale(1) sepia(0.12) contrast(0.92) brightness(1.04); }
+.invite-actions + .invite-perks { margin-top: 18px; }

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useEffect, lazy, Suspense } from 'react';
 import { SiteDataProvider, useSiteData } from './contexts/SiteDataContext';
 import BottomNav from './components/BottomNav';
@@ -163,6 +163,8 @@ function App() {
             <Route path="/journal" element={<NewsPage />} />
             <Route path="/portfolio" element={<PortfolioPage />} />
             <Route path="/admin" element={<AdminPage />} />
+            {/* QR code imprimé : ouvre directement la fenêtre « Installer l'app » */}
+            <Route path="/app" element={<Navigate to="/?bienvenue=app" replace />} />
           </Routes>
         </Suspense>
         <BottomNav />
