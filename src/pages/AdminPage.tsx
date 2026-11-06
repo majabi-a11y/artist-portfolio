@@ -1242,61 +1242,32 @@ function AdminSelect({ label, value, options, onChange }: {
   );
 }
 
-const ONESIGNAL_APP_ID = 'b224b657-b135-4fb7-b942-82277aebd8d6';
 
 function NotificationsSection() {
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('onesignal-api-key') || '');
-  const [showKey, setShowKey] = useState(false);
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [url, setUrl] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
-  const [errorMsg, setErrorMsg] = useState('');
-
-  const saveKey = (key: string) => {
-    setApiKey(key);
-    localStorage.setItem('onesignal-api-key', key);
-  };
+  const [note, setNote] = useState('');
 
   const handleSend = async () => {
-    if (!apiKey) { setErrorMsg('Ajoute ta REST API Key d\'abord'); setStatus('error'); return; }
-    if (!title || !message) { setErrorMsg('Titre et message requis'); setStatus('error'); return; }
-
+    if (!title.trim() || !message.trim()) { setNote('Il manque le titre ou le message.'); setStatus('error'); return; }
+    if (!confirm('Envoyer cette notification à tous les abonnés ?')) return;
     setStatus('sending');
     try {
-      const body: Record<string, unknown> = {
-        app_id: ONESIGNAL_APP_ID,
-        included_segments: ['All'],
-        headings: { en: title },
-        contents: { en: message },
-      };
-      if (url) body.url = url;
-
-      const res = await fetch('https://onesignal.com/api/v1/notifications', {
+      const res = await fetch('/api/push-send', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${apiKey}`,
-        },
-        body: JSON.stringify(body),
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${await auth.currentUser?.getIdToken()}` },
+        body: JSON.stringify({ title, message, url }),
       });
-
-      if (res.ok) {
-        const data = await res.json();
-        setStatus('success');
-        setTitle('');
-        setMessage('');
-        setUrl('');
-        setErrorMsg(`Notification envoyée à ${data.recipients || 0} abonné(s) !`);
-        setTimeout(() => setStatus('idle'), 3000);
-      } else {
-        const err = await res.json();
-        setStatus('error');
-        setErrorMsg(err.errors?.[0] || 'Erreur d\'envoi');
-      }
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) { setStatus('error'); setNote(body.error || `Erreur ${res.status}`); return; }
+      setStatus('success');
+      setNote(body.sent ? 'Notification envoyée.' : 'Personne n’est encore abonné aux notifications.');
+      if (body.sent) { setTitle(''); setMessage(''); setUrl(''); }
     } catch {
       setStatus('error');
-      setErrorMsg('Erreur réseau');
+      setNote('Erreur réseau.');
     }
   };
 
@@ -1306,68 +1277,15 @@ function NotificationsSection() {
         <Bell size={16} style={{ marginRight: '6px', verticalAlign: '-2px' }} />
         Notification de l'app
       </h2>
-
-      {/* API Key config */}
-      <div className="admin-card" style={{ padding: '12px', marginBottom: '16px' }}>
-        <label className="admin-label">REST API Key (OneSignal)</label>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <input
-            className="admin-input"
-            type={showKey ? 'text' : 'password'}
-            value={apiKey}
-            onChange={e => saveKey(e.target.value)}
-            placeholder="Colle ta clé ici (Settings → Keys & IDs)"
-            style={{ flex: 1, marginBottom: 0 }}
-          />
-          <button className="btn btn-sm btn-outline" onClick={() => setShowKey(!showKey)}
-            style={{ fontSize: '0.65rem', whiteSpace: 'nowrap' }}>
-            {showKey ? 'Masquer' : 'Voir'}
-          </button>
-        </div>
-        <p style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>
-          Trouve la clé dans <a href="https://app.onesignal.com" target="_blank" rel="noopener" style={{ color: 'var(--color-accent)' }}>OneSignal</a> → Settings → Keys & IDs → REST API Key
-        </p>
-      </div>
-
-      {/* Compose */}
-      <div className="admin-card" style={{ padding: '16px' }}>
-        <h3 className="admin-subsection" style={{ margin: '0 0 12px' }}>Composer une notification</h3>
-
-        <div style={{ marginBottom: '10px' }}>
-          <label className="admin-label">Titre</label>
-          <input className="admin-input" value={title} onChange={e => setTitle(e.target.value)}
-            placeholder="ex: Nouvelle œuvre disponible !" style={{ marginBottom: 0 }} />
-        </div>
-
-        <div style={{ marginBottom: '10px' }}>
-          <label className="admin-label">Message</label>
-          <textarea className="admin-input" value={message} onChange={e => setMessage(e.target.value)}
-            placeholder="ex : Découvrez « On dirait le sud », ma dernière toile…"
-            rows={3} style={{ resize: 'vertical', minHeight: '60px' }} />
-        </div>
-
-        <div style={{ marginBottom: '12px' }}>
-          <label className="admin-label">URL (optionnel)</label>
-          <input className="admin-input" value={url} onChange={e => setUrl(e.target.value)}
-            placeholder="ex: https://adriendasilva.vercel.app/catalogue/1" style={{ marginBottom: 0 }} />
-        </div>
-
-        {status === 'error' && (
-          <p style={{ fontSize: '0.7rem', color: '#e53e3e', marginBottom: '8px' }}>{errorMsg}</p>
-        )}
-        {status === 'success' && (
-          <p style={{ fontSize: '0.7rem', color: '#38a169', marginBottom: '8px' }}>{errorMsg}</p>
-        )}
-
-        <button
-          className="btn btn-primary btn-block"
-          onClick={handleSend}
-          disabled={status === 'sending'}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-        >
-          <Send size={14} />
-          {status === 'sending' ? 'Envoi...' : 'Envoyer la notification'}
+      <p className="drive-hint">Elle arrive sur les téléphones et ordinateurs des personnes qui ont accepté les notifications.</p>
+      <div className="pf-form">
+        <input className="admin-input" placeholder="Titre : Nouvelle toile" maxLength={80} aria-label="Titre" value={title} onChange={e => setTitle(e.target.value)} />
+        <textarea className="admin-input" rows={3} maxLength={300} placeholder="Message" aria-label="Message" value={message} onChange={e => setMessage(e.target.value)} />
+        <input className="admin-input" placeholder="Lien (facultatif) : https://adriendasilva.vercel.app/catalogue" aria-label="Lien" value={url} onChange={e => setUrl(e.target.value)} />
+        <button className="btn btn-primary btn-block" onClick={handleSend} disabled={status === 'sending'}>
+          <Send size={14} /> {status === 'sending' ? 'Envoi…' : 'Envoyer la notification'}
         </button>
+        {note && <p className={status === 'error' ? 'drive-error' : 'drive-hint'} role="status">{note}</p>}
       </div>
     </div>
   );

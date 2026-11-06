@@ -29,6 +29,9 @@
       OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
           appId: "b224b657-b135-4fb7-b942-82277aebd8d6",
+          // Son propre périmètre : le site garde /sw.js à la racine
+          serviceWorkerPath: "push/onesignal/OneSignalSDKWorker.js",
+          serviceWorkerParam: { scope: "/push/onesignal/" },
         });
       });
     </script>
