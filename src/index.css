@@ -1967,6 +1967,7 @@ textarea.admin-input {
 .gallery-item {
   display: flex;
   flex-direction: column;
+  width: 100%; /* Safari n'étire pas le contenu d'un bouton : sans largeur, le cadre tombe à zéro */
   gap: 12px;
   background: none;
   border: none;
@@ -1980,6 +1981,7 @@ textarea.admin-input {
 /* Cadre clair : l'œuvre entière, jamais recadrée */
 .gallery-frame {
   position: relative;
+  width: 100%;
   aspect-ratio: 4 / 5;
   display: flex;
   align-items: center;
