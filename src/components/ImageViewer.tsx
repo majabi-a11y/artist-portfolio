@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ImageViewerProps {
@@ -38,10 +39,11 @@ export default function ImageViewer({ images, startIndex = 0, alt = '', onClose 
     if (Math.abs(dx) > 50) { dx < 0 ? next() : prev(); }
   };
 
-  return (
-    <div className="image-viewer-overlay" onClick={onClose}
+  // Dans <body> : les pages animées font perdre à « position: fixed » son ancrage à l'écran
+  return createPortal(
+    <div className="image-viewer-overlay" onClick={e => { e.stopPropagation(); onClose(); }}
       onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-      <button className="image-viewer-close" onClick={onClose} aria-label="Fermer">
+      <button className="image-viewer-close" aria-label="Fermer">
         <X size={20} />
       </button>
 
@@ -72,6 +74,7 @@ export default function ImageViewer({ images, startIndex = 0, alt = '', onClose 
           {current + 1} / {N}
         </div>
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }

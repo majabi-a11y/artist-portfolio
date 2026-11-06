@@ -132,7 +132,7 @@ export async function buildCataloguePdf(data: SiteData, weight: Weight = FULL): 
   doc.setAuthor('Adrien Da Silva');
   const f = await loadFonts(doc);
   const year = new Date().getFullYear();
-  const works = data.artworks.filter(isStore);
+  const works = data.artworks.filter(isStore).sort((a, b) => (b.year ?? 0) - (a.year ?? 0)); // les plus récentes d'abord
   const [W, H] = A4;
 
   const featured = works.find(a => a.isFeatured && a.images?.[0]) ?? works.find(a => a.images?.[0]);

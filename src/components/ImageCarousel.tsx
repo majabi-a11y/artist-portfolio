@@ -9,9 +9,10 @@ interface Props {
   height?: string;
   className?: string;
   fit?: 'cover' | 'contain'; // contain : l'œuvre entière, sans recadrage
+  zoom?: boolean; // false : le clic revient à l'élément parent
 }
 
-export default function ImageCarousel({ images, alt = '', height = '240px', className = '', fit = 'cover' }: Props) {
+export default function ImageCarousel({ images, alt = '', height = '240px', className = '', fit = 'cover', zoom = true }: Props) {
   const [current, setCurrent] = useState(0);
   const [viewerOpen, setViewerOpen] = useState(false);
   const count = images.length;
@@ -20,8 +21,8 @@ export default function ImageCarousel({ images, alt = '', height = '240px', clas
   if (count === 1) {
     return (
       <>
-        <div className={`img-carousel ${className}`} style={{ height, cursor: 'zoom-in' }}
-          onClick={() => setViewerOpen(true)}>
+        <div className={`img-carousel ${className}`} style={{ height, cursor: zoom ? 'zoom-in' : 'pointer' }}
+          onClick={() => zoom && setViewerOpen(true)}>
           <img src={thumb(images[0])} alt={alt} style={{ width: '100%', height: '100%', objectFit: fit }} loading="lazy" />
         </div>
         {viewerOpen && (
@@ -43,10 +44,10 @@ export default function ImageCarousel({ images, alt = '', height = '240px', clas
               position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: fit,
               opacity: i === current ? 1 : 0,
               transition: 'opacity 0.4s ease',
-              cursor: 'zoom-in',
+              cursor: zoom ? 'zoom-in' : 'pointer',
             }}
             loading="lazy"
-            onClick={() => setViewerOpen(true)}
+            onClick={() => zoom && setViewerOpen(true)}
           />
         ))}
 

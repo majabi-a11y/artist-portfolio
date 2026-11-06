@@ -2543,7 +2543,14 @@ textarea.admin-input {
 .fresque-map-wrap { margin-bottom: 26px; }
 .fresque-map { height: min(62vh, 520px); border: 0.5px solid rgba(var(--ink-rgb), 0.18); background: var(--color-dark-card); z-index: 0; }
 .fresque-map-note { margin-top: 8px; font-size: 0.62rem; color: var(--color-text-muted); }
-.fresque-pin { width: 18px; height: 18px; border-radius: 50%; background: var(--color-outremer); border: 3px solid #f4f1ea; box-shadow: 0 0 0 1px rgba(29, 26, 168, 0.4); }
+.fresque-pin { background: #f4f1ea; border: 3px solid #f4f1ea; box-shadow: 0 0 0 1px rgba(29, 26, 168, 0.5), 0 2px 8px rgba(0, 0, 0, 0.25); overflow: hidden; }
+.fresque-pin img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.fresque-photos { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+.fresque-photos button { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.fresque-photos img { display: block; width: 100%; height: auto; }
+.fresque-meta { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 8px 0 18px; font-size: 0.74rem; color: var(--color-text-muted); }
+.fresque-text { font-size: 0.9rem; line-height: 1.7; margin-bottom: 24px; }
+.fresque-next { display: block; margin-top: 36px; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; font-size: 0.72rem; text-decoration: underline; text-underline-offset: 3px; }
 .fresque-popup { display: flex; flex-direction: column; gap: 4px; font-family: var(--font-main); color: #1d1aa8; }
 .fresque-popup img { width: 100%; height: 110px; object-fit: cover; margin-bottom: 6px; }
 .fresque-popup strong { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 1.05rem; font-weight: 600; }

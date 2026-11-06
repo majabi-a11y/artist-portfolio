@@ -1,19 +1,16 @@
-import { useState, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSiteData } from '../contexts/SiteDataContext';
 import { MapPin } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import ImageCarousel from '../components/ImageCarousel';
 import FresqueMap from '../components/FresqueMap';
 import { isPublished } from '../data/defaultData';
-import { recordView } from '../lib/taste';
 
 export default function FresquesPage() {
   const { data } = useSiteData();
   const navigate = useNavigate();
   const fresques = data.artworks.filter(a => a.category === 'fresque' && isPublished(a));
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = fresques.find(f => f.id === selectedId);
   // Carte de toutes les fresques ; l'icône de lieu d'une fresque l'ouvre centrée sur elle
   const [showMap, setShowMap] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(null);
@@ -23,7 +20,11 @@ export default function FresquesPage() {
     setFocusId(id);
     requestAnimationFrame(() => mapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   };
-  const openFresque = useCallback((id: string) => setSelectedId(id), []);
+  const openFresque = useCallback((id: string) => navigate(`/fresques/${id}`), [navigate]);
+  // Depuis la page d'une fresque : /fresques?carte=<id>
+  const [params] = useSearchParams();
+  const fromDetail = params.get('carte');
+  useEffect(() => { if (fromDetail) openMap(fromDetail); }, [fromDetail]);
 
   return (
     <div className="page-wrapper">
@@ -44,9 +45,9 @@ export default function FresquesPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {fresques.map(fresque => (
               <div key={fresque.id} className="card" style={{ overflow: 'hidden', cursor: 'pointer' }}
-                onClick={() => { setSelectedId(fresque.id); recordView(fresque.id); }}>
+                onClick={() => openFresque(fresque.id)}>
                 {fresque.images?.length > 0 && (
-                  <ImageCarousel images={fresque.images} alt={fresque.title} height="260px" />
+                  <ImageCarousel images={fresque.images} alt={fresque.title} height="260px" zoom={false} />
                 )}
                 <div style={{ padding: '20px' }}>
                   <h3 className="artwork-title" style={{ fontSize: '1.15rem', marginBottom: '6px' }}>{fresque.title}</h3>
@@ -77,34 +78,6 @@ export default function FresquesPage() {
         </button>
       </div>
 
-      {/* Detail overlay */}
-      {selected && (
-        <div className="detail-overlay" onClick={() => setSelectedId(null)}>
-          <div className="detail-card" onClick={e => e.stopPropagation()}>
-            <button className="detail-close" onClick={() => setSelectedId(null)} aria-label="Fermer">✕</button>
-            {selected.images?.length > 0 && (
-              <ImageCarousel images={selected.images} alt={selected.title} height="320px" fit="contain" />
-            )}
-            <div className="detail-body">
-              <h2 className="detail-title artwork-title">{selected.title}</h2>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', fontSize: '0.72rem', color: 'var(--color-text-muted)', marginBottom: '12px' }}>
-                <span>{selected.year}</span>
-                {selected.lieu && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <MapPin size={12} /> {selected.lieu}
-                  </span>
-                )}
-                {selected.dimensions && <span>{selected.dimensions}</span>}
-              </div>
-              <p className="detail-desc">{selected.description}</p>
-              <button className="btn btn-primary btn-sm" style={{ marginTop: '16px' }}
-                onClick={() => navigate(`/contact?type=quote&title=${encodeURIComponent(selected.title)}`)}>
-                Demander un devis
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

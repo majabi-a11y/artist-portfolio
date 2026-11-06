@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useCallback, useEffect, useRef, ty
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { uploadToSupabase } from '../supabase';
-import { defaultSiteData, CONTENT_VERSION, CONTENT_ADDS, ADDED_WORKS, type SiteData, type Artwork, type NewsPost, type Exhibition, type PressItem, type PortfolioItem, type ThemeConfig, type ArtistProfile, type HomeNavItem, type MenuConfig } from '../data/defaultData';
+import { defaultSiteData, CONTENT_VERSION, CONTENT_ADDS, ADDED_WORKS, WORK_FIXES, type SiteData, type Artwork, type NewsPost, type Exhibition, type PressItem, type PortfolioItem, type ThemeConfig, type ArtistProfile, type HomeNavItem, type MenuConfig } from '../data/defaultData';
 
 const SITE_DOC = doc(db, 'site', 'data');
 
@@ -58,12 +58,14 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     // Donnée d'une ancienne version (contenu de démonstration) : on repart du contenu actuel.
     if ((firestore.contentVersion ?? 0) < CONTENT_VERSION) return defaultSiteData;
     const merged = { ...defaultSiteData, ...firestore };
-    // Nouvelles œuvres : une seule fois, ce qu'Adrien retire ensuite ne revient pas
-    if ((firestore.contentAdds ?? 0) < CONTENT_ADDS) {
+    // Ajouts et corrections : une seule fois, ce qu'Adrien change ensuite n'est pas écrasé
+    const seen = firestore.contentAdds ?? 0;
+    if (seen < 1) {
       const have = new Set(merged.artworks.map(a => a.id));
       merged.artworks = [...defaultSiteData.artworks.filter(a => ADDED_WORKS.includes(a.id) && !have.has(a.id)), ...merged.artworks];
-      merged.contentAdds = CONTENT_ADDS;
     }
+    if (seen < 2) merged.artworks = merged.artworks.map(a => ({ ...a, ...WORK_FIXES[a.id] }));
+    merged.contentAdds = CONTENT_ADDS;
     // Merge profile sub-fields
     merged.profile = { ...defaultSiteData.profile, ...(firestore.profile || {}) };
     if (!merged.profile.cvSections?.length) merged.profile.cvSections = defaultSiteData.profile.cvSections;

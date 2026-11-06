@@ -15,7 +15,7 @@ const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt
 
 /**
  * Carte de toutes les fresques (fond OpenStreetMap, sans clé ni compte) ;
- * chaque bulle propose « Voir la fresque » et « Itinéraire » dans Google Maps.
+ * chaque repère montre la photo de la fresque ; sa bulle propose « Voir la fresque » et « Itinéraire » dans Google Maps.
  */
 export default function FresqueMap({ fresques, focusId, onOpen }: Props) {
   const el = useRef<HTMLDivElement>(null);
@@ -30,13 +30,18 @@ export default function FresqueMap({ fresques, focusId, onOpen }: Props) {
       attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       maxZoom: 19,
     }).addTo(m);
-    const icon = L.divIcon({ className: 'fresque-pin', iconSize: [18, 18], iconAnchor: [9, 9], popupAnchor: [0, -10] });
     const points: L.LatLngExpression[] = [];
     for (const f of fresques) {
       if (!f.coords) continue;
       const [lat, lng] = f.coords;
       const gmaps = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-      const marker = L.marker([lat, lng], { icon, title: f.title }).addTo(m).bindPopup(`
+      // Le repère est la photo de la fresque
+      const icon = L.divIcon({
+        className: 'fresque-pin',
+        html: f.images[0] ? `<img src="${esc(thumb(f.images[0]))}" alt="">` : '',
+        iconSize: [54, 54], iconAnchor: [27, 27], popupAnchor: [0, -30],
+      });
+      const marker = L.marker([lat, lng], { icon, title: f.title, riseOnHover: true }).addTo(m).bindPopup(`
         <div class="fresque-popup">
           ${f.images[0] ? `<img src="${esc(thumb(f.images[0]))}" alt="">` : ''}
           <strong>${esc(f.title)}</strong>

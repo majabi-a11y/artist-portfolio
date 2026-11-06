@@ -10,6 +10,7 @@ const CataloguePage = lazy(() => import('./pages/CataloguePage'));
 const ArtworkDetailPage = lazy(() => import('./pages/ArtworkDetailPage'));
 const FilterPage = lazy(() => import('./pages/FilterPage'));
 const FresquesPage = lazy(() => import('./pages/FresquesPage'));
+const FresqueDetailPage = lazy(() => import('./pages/FresqueDetailPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
@@ -158,6 +159,7 @@ function App() {
             <Route path="/catalogue/:id" element={<ArtworkDetailPage />} />
             <Route path="/filter" element={<FilterPage />} />
             <Route path="/fresques" element={<FresquesPage />} />
+            <Route path="/fresques/:id" element={<FresqueDetailPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/journal" element={<NewsPage />} />

@@ -51,10 +51,10 @@ export default function CataloguePage() {
       return lo === hi ? String(lo) : `${lo} – ${hi}`;
     };
     const count = (n: number) => `${n} œuvre${n > 1 ? 's' : ''}`;
-    const byYear = (a: Artwork, b: Artwork) => (a.year ?? 0) - (b.year ?? 0);
-    if (view === 'toutes') return [{ key: 'toutes', title: '', meta: '', works: filtered }] as Group[];
+    const byYear = (a: Artwork, b: Artwork) => (b.year ?? 0) - (a.year ?? 0); // les plus récentes d'abord
+    if (view === 'toutes') return [{ key: 'toutes', title: '', meta: '', works: [...filtered].sort(byYear) }] as Group[];
     if (view === 'annee') {
-      const years = [...new Set(filtered.map(w => w.year ?? 0))].sort((a, b) => a - b);
+      const years = [...new Set(filtered.map(w => w.year ?? 0))].sort((a, b) => b - a);
       return years.map(y => {
         const works = filtered.filter(w => (w.year ?? 0) === y);
         const names = [...new Set(works.map(w => SERIES.find(x => x.id === w.serie)?.titre).filter(Boolean))];
@@ -62,7 +62,7 @@ export default function CataloguePage() {
       }) as Group[];
     }
     const out: Group[] = [];
-    for (const serie of SERIES) {
+    for (const serie of [...SERIES].reverse()) {
       const works = filtered.filter(w => w.serie === serie.id).sort(byYear);
       if (works.length) out.push({ key: serie.id, title: serie.titre, meta: [span(works), count(works.length)].filter(Boolean).join(' · '), text: serie.texte, works });
     }
