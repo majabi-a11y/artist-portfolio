@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, Copy, Check, Send } from 'lucide-react';
+import { Users, Copy, Check, Send, Trash2 } from 'lucide-react';
 import type { SiteData } from '../data/defaultData';
 import { auth } from '../firebase';
 import { supabase } from '../supabase';
@@ -73,6 +73,14 @@ export default function InvitesPanel({ data, replaceData }: Props) {
     else setInvites(data as Invite[]);
   };
 
+  const remove = async (email: string) => {
+    if (!supabase || !confirm(`Retirer ${email} de la liste des invités ?`)) return;
+    setError('');
+    const { error } = await supabase.rpc('adrien_da_silva_retirer', { p_email: email });
+    if (error) setError(error.message);
+    else setInvites(list => list?.filter(i => i.email !== email) ?? null);
+  };
+
   const copyAll = async () => {
     if (!invites?.length) return;
     await navigator.clipboard.writeText(invites.map(i => i.email).join(', '));
@@ -105,6 +113,7 @@ export default function InvitesPanel({ data, replaceData }: Props) {
               <li key={i.email}>
                 <span>{i.nom ? `${i.nom} — ` : ''}{i.email}</span>
                 <small>{new Date(i.inscrit_le).toLocaleDateString('fr-FR')} · {i.source === 'contact' ? 'formulaire' : 'site'}</small>
+                <button type="button" className="invite-remove" aria-label={`Retirer ${i.email}`} onClick={() => remove(i.email)}><Trash2 size={14} /></button>
               </li>
             ))}
           </ul>
