@@ -59,15 +59,15 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     if ((firestore.contentVersion ?? 0) < CONTENT_VERSION) return defaultSiteData;
     const merged = { ...defaultSiteData, ...firestore };
     // Ajouts et corrections : une seule fois, ce qu'Adrien change ensuite n'est pas écrasé
-    const seen = firestore.contentAdds ?? 0;
-    if (seen < 1) {
+    const adds = firestore.contentAdds ?? 0;
+    if (adds < 1) {
       const have = new Set(merged.artworks.map(a => a.id));
       merged.artworks = [...defaultSiteData.artworks.filter(a => ADDED_WORKS.includes(a.id) && !have.has(a.id)), ...merged.artworks];
     }
-    if (seen < 2) merged.artworks = merged.artworks.map(a => ({ ...a, ...WORK_FIXES[a.id] }));
-    if (seen < 3) merged.catalogueOnline = ''; // prix masqués : plus de PDF public
-    if (seen < 4) merged.news = merged.news.map(n => (n.id === 'catalogue-2026' ? { ...n, content: CATALOGUE_NEWS } : n));
-    if (seen < 6) {
+    if (adds < 2) merged.artworks = merged.artworks.map(a => ({ ...a, ...WORK_FIXES[a.id] }));
+    if (adds < 3) merged.catalogueOnline = ''; // prix masqués : plus de PDF public
+    if (adds < 4) merged.news = merged.news.map(n => (n.id === 'catalogue-2026' ? { ...n, content: CATALOGUE_NEWS } : n));
+    if (adds < 6) {
       merged.news = [...defaultSiteData.news.filter(n => n.id === 'les-jours-sans-vent'), ...merged.news.filter(n => n.id !== 'les-jours-sans-vent')];
     }
     merged.contentAdds = CONTENT_ADDS;
@@ -82,6 +82,13 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
       const combined = [...firestore.homeNav.map(n => ({ ...n, textColor: n.textColor || '#1d1aa8' })), ...missingDefaults];
       const seen = new Set<string>();
       merged.homeNav = combined.filter(n => { if (seen.has(n.route)) return false; seen.add(n.route); return true; });
+    }
+    // Couvertures de l'accueil : une seule fois, celles qu'Adrien choisit ensuite restent
+    if (adds < 7) {
+      merged.homeNav = merged.homeNav.map(n => {
+        const fresh = defaultSiteData.homeNav.find(d => d.route === n.route);
+        return fresh && n.direction !== 'bio' ? { ...n, image: fresh.image, subtitle: fresh.subtitle } : n;
+      });
     }
     // Migrate portfolio: old single `image` → `images[]`
     if (merged.portfolio) {

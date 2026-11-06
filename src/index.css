@@ -2304,18 +2304,6 @@ textarea.admin-input {
 .gallery-price.is-sold, .detail-price.is-sold { color: var(--color-text-secondary); }
 
 /* Menu : couleurs de la toile préférée du visiteur */
-.menu-taste {
-  position: absolute;
-  left: 24px;
-  right: 24px;
-  bottom: calc(28px + env(safe-area-inset-bottom));
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.64rem;
-  letter-spacing: 0.04em;
-  color: var(--color-text-muted);
-}
 
 /* Inscription : Google d'abord, e-mail en repli */
 .invite-join { display: flex; flex-direction: column; gap: 10px; }

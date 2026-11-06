@@ -169,7 +169,7 @@ export interface SiteData {
  */
 export const CONTENT_VERSION = 2;
 /** Œuvres ajoutées après le premier enregistrement en ligne : injectées une fois, sans toucher au reste (SiteDataContext). */
-export const CONTENT_ADDS = 6;
+export const CONTENT_ADDS = 7;
 export const CATALOGUE_NEWS = 'Vingt-huit œuvres, de la nouvelle série « Les jours sans vent » aux toiles « On dirait le sud » et aux séries « Temps libre » et « Hors ligne ». À voir dans le catalogue.';
 /** Corrections d'Adrien sur des œuvres déjà enregistrées (version 2). */
 export const WORK_FIXES: Record<string, Partial<Artwork>> = {
@@ -411,11 +411,11 @@ Entrée libre. Du mercredi au vendredi de 10h30 à 18h, le samedi de 15h à 18h3
   },
   homeNav: [
     { direction: 'bio', label: 'Adrien Da Silva', subtitle: 'Peintre et muraliste — Montpellier', route: '/profile', image: '/atelier/adrien-au-travail.webp', textColor: '#1d1aa8' },
-    { direction: 'up', label: 'Catalogue', subtitle: '19 œuvres · 2026', route: '/catalogue', image: oeuvre('on-dirait-le-sud-146-x-97'), textColor: '#1d1aa8' },
-    { direction: 'right', label: 'Fresques', subtitle: 'Œuvres murales', route: '/fresques', image: '/fresques/raconte-moi-carnon-1.webp', textColor: '#1d1aa8' },
-    { direction: 'center', label: 'Journal', subtitle: 'Actualités et expositions', route: '/journal', image: oeuvre('le-temps-libre'), textColor: '#1d1aa8' },
-    { direction: 'center', label: 'Filtre', subtitle: 'Votre photo en lignes', route: '/filter', image: oeuvre('temps-libre-2-0'), textColor: '#1d1aa8' },
-    { direction: 'down', label: 'Contact', subtitle: 'Écrire à l\'artiste', route: '/contact', image: oeuvre('lignes-de-vies'), textColor: '#1d1aa8' },
+    { direction: 'up', label: 'Catalogue', subtitle: '28 œuvres · 2026', route: '/catalogue', image: oeuvre('les-jours-sans-vent-1'), textColor: '#1d1aa8' },
+    { direction: 'right', label: 'Fresques', subtitle: 'Œuvres murales', route: '/fresques', image: '/fresques/hors-lignes-1.webp', textColor: '#1d1aa8' },
+    { direction: 'center', label: 'Journal', subtitle: 'Actualités et expositions', route: '/journal', image: '/journal/ljsv-rosas-a.webp', textColor: '#1d1aa8' },
+    { direction: 'center', label: 'Filtre', subtitle: 'Votre photo en lignes', route: '/filter', image: oeuvre('les-jours-sans-vent-3'), textColor: '#1d1aa8' },
+    { direction: 'down', label: 'Contact', subtitle: 'Écrire à l\'artiste', route: '/contact', image: oeuvre('les-jours-sans-vent-2'), textColor: '#1d1aa8' },
   ],
   menuConfig: {
     items: [
