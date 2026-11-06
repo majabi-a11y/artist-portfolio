@@ -135,7 +135,7 @@ export interface SiteData {
   contentVersion?: number; // voir CONTENT_VERSION
   driveFolderUrl?: string; // dossier Drive partagé d'où viennent les nouvelles photos
   driveImported?: string[]; // identifiants des fichiers Drive déjà importés
-  pdfCovers?: { catalogue?: string; portfolio?: string }; // couvertures choisies dans l'admin (sinon automatiques)
+  pdfCovers?: { catalogue?: string; portfolio?: string; portfolioDos?: string }; // couvertures choisies dans l'admin (sinon automatiques)
   portfolioPdf?: { aplat?: string; kraft?: string; pages?: PortfolioPage[] }; // réglages du portfolio PDF (sinon son PDF d'origine)
 }
 

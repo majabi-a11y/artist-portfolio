@@ -3,7 +3,7 @@ import { Upload } from 'lucide-react';
 import type { SiteData } from '../data/defaultData';
 import { thumb } from '../data/defaultData';
 
-type Kind = 'catalogue' | 'portfolio';
+type Kind = 'catalogue' | 'portfolio' | 'portfolioDos';
 
 interface Props {
   data: SiteData;
@@ -11,7 +11,11 @@ interface Props {
   uploadImage: (file: File, path: string) => Promise<string>;
 }
 
-const LABELS: Record<Kind, string> = { catalogue: 'Couverture du catalogue', portfolio: 'Couverture du portfolio' };
+const LABELS: Record<Kind, string> = {
+  catalogue: 'Couverture du catalogue',
+  portfolio: 'Couverture du portfolio (page entière)',
+  portfolioDos: '4e de couverture du portfolio (page entière)',
+};
 
 /** Admin : image de couverture de chaque PDF, choisie parmi les œuvres ou importée. */
 export default function PdfCovers({ data, replaceData, uploadImage }: Props) {
@@ -44,19 +48,19 @@ export default function PdfCovers({ data, replaceData, uploadImage }: Props) {
   return (
     <div className="pdf-covers">
       <input ref={input} type="file" accept="image/*" onChange={onFile} style={{ display: 'none' }} />
-      {(['catalogue', 'portfolio'] as Kind[]).map(kind => {
+      {(['catalogue', 'portfolio', 'portfolioDos'] as Kind[]).map(kind => {
         const src = data.pdfCovers?.[kind] ?? '';
         const known = works.some(a => a.images[0] === src);
         return (
           <div key={kind} className="pdf-cover">
             <div className="pdf-cover-thumb">
-              {src ? <img src={thumb(src)} alt="" /> : <span>Auto</span>}
+              {src ? <img src={src.startsWith('/') ? thumb(src) : src} alt="" /> : <span>{kind === 'catalogue' ? 'Auto' : 'Origine'}</span>}
             </div>
             <div className="pdf-cover-fields">
               <label className="drive-label" htmlFor={`cover-${kind}`}>{LABELS[kind]}</label>
               <select id={`cover-${kind}`} className="admin-input" value={known ? src : src ? 'import' : ''}
                 onChange={e => { if (e.target.value !== 'import') setCover(kind, e.target.value); }}>
-                <option value="">Automatique</option>
+                <option value="">{kind === 'catalogue' ? 'Automatique' : "Celle d'origine"}</option>
                 {src && !known && <option value="import">Image importée</option>}
                 {works.map(a => <option key={a.id} value={a.images[0]}>{a.title.trim()}{a.dimensions ? ` (${a.dimensions})` : ''}</option>)}
               </select>

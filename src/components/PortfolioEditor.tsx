@@ -141,7 +141,7 @@ export default function PortfolioEditor({ data, replaceData, uploadImage }: Prop
       <input ref={input} type="file" accept="image/*" onChange={onFile} style={{ display: 'none' }} />
       <p className="drive-hint">Portfolio : ses pages restent identiques. Le premier carré de chaque couleur est celle d'origine.</p>
       {colors('Couleur des aplats (bio et parcours)', 'aplat', APLATS)}
-      {colors('Couleur du kraft (couverture et dos)', 'kraft', KRAFTS)}
+      {colors("Couleur du kraft (couverture et dos d'origine)", 'kraft', KRAFTS)}
 
       {pages.map(p => (
         <div key={p.id} className="pf-row">

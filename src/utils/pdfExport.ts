@@ -219,10 +219,6 @@ async function repaint(doc: PDFDocument, n: number, size: [number, number], data
   if (aplat && n === 2) recolorAplat(shot.data, b.width, Math.round(b.width * 0.4996), b.height, aplat);
   if (aplat && n === 4) recolorAplat(shot.data, b.width, b.width, Math.round(b.height * 0.6864), aplat);
   ctx.putImageData(shot, 0, 0);
-  if (n === 1 && data.pdfCovers?.portfolio) {
-    const w = b.width, h = b.height;
-    drawCover(ctx, await bitmapOf(data.pdfCovers.portfolio), w * 0.2846, h * 0.4985, w * 0.2054, h * 0.2499);
-  }
   const page = doc.addPage(size);
   page.drawImage(await canvasJpeg(doc, canvas), { x: 0, y: 0, width: size[0], height: size[1] });
 }
@@ -235,6 +231,13 @@ async function placeImage(doc: PDFDocument, page: PDFPage, src: string | undefin
   canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale);
   drawCover(canvas.getContext('2d')!, await bitmapOf(src), 0, 0, canvas.width, canvas.height);
   page.drawImage(await canvasJpeg(doc, canvas), { x, y, width: w, height: h });
+}
+
+/** Couverture ou 4e de couverture fournie par Adrien : la page entière, au format de l'image, sans recadrage. */
+async function fullPage(doc: PDFDocument, src: string) {
+  const b = await bitmapOf(src);
+  const [w, h] = [SHEET[0], (SHEET[0] * b.height) / b.width];
+  await placeImage(doc, doc.addPage([w, h]), src, 0, 0, w, h);
 }
 
 /** Page ajoutée dans l'admin, sur le modèle des siennes : fond blanc, petite légende. */
@@ -267,14 +270,15 @@ export async function buildPortfolioPdf(data: SiteData): Promise<Blob> {
   const added = data.portfolioPdf?.pages ?? [];
   const f = added.length ? await loadFonts(doc) : null;
   const { aplat, kraft } = data.portfolioPdf ?? {};
-  const painted = new Set<number>([
-    ...(aplat ? [2, 4] : []), ...(kraft ? [1, 20] : []), ...(data.pdfCovers?.portfolio ? [1] : []),
-  ]);
+  const painted = new Set<number>([...(aplat ? [2, 4] : []), ...(kraft ? [1, 20] : [])]);
+  const full: Record<number, string | undefined> = { 1: data.pdfCovers?.portfolio, 20: data.pdfCovers?.portfolioDos };
 
   const copies = await doc.copyPages(source, source.getPageIndices());
   for (let n = 1; n <= copies.length; n++) {
     const { width, height } = copies[n - 1].getSize();
-    if (painted.has(n)) await repaint(doc, n, [width, height], data);
+    const whole = full[n];
+    if (whole) await fullPage(doc, whole);
+    else if (painted.has(n)) await repaint(doc, n, [width, height], data);
     else doc.addPage(copies[n - 1]);
     for (const p of added.filter(a => a.after === n)) await addedPage(doc, f!, p);
   }
