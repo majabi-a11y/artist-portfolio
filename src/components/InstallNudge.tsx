@@ -61,7 +61,9 @@ export default function InstallNudge() {
           {ios
             ? <li><Share size={15} /> Touchez <strong>Partager</strong></li>
             : <li><EllipsisVertical size={15} /> Ouvrez le <strong>menu</strong> du navigateur</li>}
-          <li><SquarePlus size={15} /> Puis <strong>{ios ? "Sur l'écran d'accueil" : "Ajouter à l'écran d'accueil"}</strong></li>
+          {ios
+            ? <li><SquarePlus size={15} /> Puis <strong>Sur l'écran d'accueil</strong></li>
+            : <li><Download size={15} /> Puis choisissez <strong>Installer</strong></li>}
         </ol>
       ) : (
         <>
