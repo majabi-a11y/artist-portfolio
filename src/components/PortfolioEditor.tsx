@@ -38,11 +38,12 @@ interface ColorFieldProps {
   label: string;
   swatches: string[];
   value: string;
+  cover?: string;
   onChange: (color: string) => void;
 }
 
-/** Une couleur : pastilles, nuancier, code à taper, ou pipette sur sa palette. */
-function ColorField({ label, swatches, value, onChange }: ColorFieldProps) {
+/** Une couleur : pastilles, nuancier, code à taper, ou pipette sur la couverture. */
+function ColorField({ label, swatches, value, cover, onChange }: ColorFieldProps) {
   const [typing, setTyping] = useState<string | null>(null);
   const [dropper, setDropper] = useState(false);
   return (
@@ -64,8 +65,8 @@ function ColorField({ label, swatches, value, onChange }: ColorFieldProps) {
         <button type="button" className={`btn btn-outline btn-sm${dropper ? ' is-on' : ''}`} aria-pressed={dropper}
           onClick={() => setDropper(d => !d)}><Pipette size={13} /> Pipette</button>
       </div>
-      {dropper && (
-        <img className="pf-palette" src="/portfolio/palette.webp" alt="Sa palette : cliquer pour prélever une couleur"
+      {dropper && cover && (
+        <img className="pf-palette" src={cover} crossOrigin="anonymous" alt="La couverture : cliquer pour prélever une couleur"
           onClick={e => onChange(pixelAt(e))} />
       )}
     </div>
@@ -87,6 +88,7 @@ export default function PortfolioEditor({ data, replaceData, uploadImage }: Prop
   const sheet = sheets.find(s => s.id === current) ?? sheets[0];
   const block = sheet?.blocks.find(b => b.id === selected) ?? null;
   const works = data.artworks.filter(a => !a.draft && a.images?.[0]);
+  const cover = sheets.find(s => !s.hidden)?.blocks.find(b => b.kind === 'image')?.src;
 
   const save = (next: Partial<NonNullable<SiteData['portfolioPdf']>>) =>
     replaceData({ ...data, portfolioPdf: JSON.parse(JSON.stringify({ ...settings, ...next })) }); // Firestore refuse les undefined
@@ -234,7 +236,7 @@ export default function PortfolioEditor({ data, replaceData, uploadImage }: Prop
               <option value="right">À droite</option>
             </select>
           </div>
-          <ColorField label="Couleur du texte" swatches={TEXTS} value={block.color ?? (light ? '#1a1a1a' : '#ffffff')}
+          <ColorField label="Couleur du texte" swatches={TEXTS} value={block.color ?? (light ? '#1a1a1a' : '#ffffff')} cover={cover}
             onChange={color => patchBlock(block.id, { color })} />
         </div>
       )}
@@ -267,9 +269,9 @@ export default function PortfolioEditor({ data, replaceData, uploadImage }: Prop
             <label className="drive-label" htmlFor="pf-name">Nom de la page (seulement ici)</label>
             <input id="pf-name" className="admin-input" value={sheet.name} onChange={e => patchSheet({ name: e.target.value })} />
           </div>
-          <ColorField label="Fond de cette page" swatches={[...new Set([...BACKGROUNDS, aplat])]} value={bg}
+          <ColorField label="Fond de cette page" swatches={[...new Set([...BACKGROUNDS, aplat])]} value={bg} cover={cover}
             onChange={c => patchSheet({ bg: c === aplat ? 'aplat' : c === '#ffffff' ? undefined : c })} />
-          <ColorField label="Couleur des aplats (présentation et parcours)" swatches={APLATS} value={aplat}
+          <ColorField label="Couleur des aplats (présentation et parcours)" swatches={APLATS} value={aplat} cover={cover}
             onChange={c => save({ aplat: c === APLATS[0] ? undefined : c })} />
         </>
       )}
