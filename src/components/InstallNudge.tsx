@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Bell, Download, Share, SquarePlus, X } from 'lucide-react';
+import { Bell, Download, EllipsisVertical, Share, SquarePlus, X } from 'lucide-react';
 import { canPromptInstall, enableNotifications, isIOS, isStandalone, notificationsGranted, onInstallChange, promptInstall } from '../lib/invite';
 
 const CLOSED = 'ads-nudge-ferme';
 const PAUSE = 30 * 24 * 3600 * 1000; // une barre fermée se tait 30 jours
-const DELAY = 12000; // le temps de regarder le site d'abord
+const DELAY = 6000; // le temps de regarder le site d'abord
 
 const paused = () => {
   try { return Date.now() - Number(localStorage.getItem(CLOSED) || 0) < PAUSE; } catch { return false; }
@@ -50,14 +50,18 @@ export default function InstallNudge() {
   }
 
   const ios = isIOS();
-  if (!installable && !ios) return null;
+  // Android n'envoie pas toujours son signal d'installation : on montre alors les gestes
+  const touch = window.matchMedia('(pointer: coarse)').matches;
+  if (!installable && !ios && !touch) return null;
 
   return (
     <aside className="install-nudge" aria-label="Installer l'app">
       {steps ? (
         <ol className="install-nudge-steps">
-          <li><Share size={15} /> Touchez <strong>Partager</strong></li>
-          <li><SquarePlus size={15} /> Puis <strong>Sur l'écran d'accueil</strong></li>
+          {ios
+            ? <li><Share size={15} /> Touchez <strong>Partager</strong></li>
+            : <li><EllipsisVertical size={15} /> Ouvrez le <strong>menu</strong> du navigateur</li>}
+          <li><SquarePlus size={15} /> Puis <strong>{ios ? "Sur l'écran d'accueil" : "Ajouter à l'écran d'accueil"}</strong></li>
         </ol>
       ) : (
         <>
