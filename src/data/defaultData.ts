@@ -169,7 +169,7 @@ export interface SiteData {
  */
 export const CONTENT_VERSION = 2;
 /** Œuvres ajoutées après le premier enregistrement en ligne : injectées une fois, sans toucher au reste (SiteDataContext). */
-export const CONTENT_ADDS = 4;
+export const CONTENT_ADDS = 5;
 export const CATALOGUE_NEWS = 'Vingt-huit œuvres, de la nouvelle série « Les jours sans vent » aux toiles « On dirait le sud » et aux séries « Temps libre » et « Hors ligne ». À voir dans le catalogue.';
 /** Corrections d'Adrien sur des œuvres déjà enregistrées (version 2). */
 export const WORK_FIXES: Record<string, Partial<Artwork>> = {
@@ -359,6 +359,22 @@ export const defaultSiteData: SiteData = {
     { id: 'etang-de-l-or', coords: [43.565, 3.951], title: 'Étang de l\'or', year: 2024, technique: 'Fresque', dimensions: '20 m²', lieu: 'Pérols', description: 'Réhabilitation d\'un transformateur électrique Enedis pour la ville de Pérols. L\'intervention montre comment des structures techniques deviennent des signaux visuels poétiques. L\'eau est au cœur du projet, par ses couleurs comme par sa représentation, comme une promenade au bord de l\'étang.', images: fresque('etang-de-l-or', 2), category: 'fresque', isFeatured: false, status: 'private' },
   ],
   news: [
+    {
+      id: 'les-jours-sans-vent',
+      title: 'Les jours sans vent, à la Galerie Cilas',
+      date: '2026-10-29',
+      content: `Du 29 octobre au 5 décembre 2026, la Galerie Cilas présente « Les jours sans vent », une exposition réunissant Adrien Da Silva et Rémi Tournier, au 3 rue du Lantissargues à Montpellier, au sein du tiers-lieu Restanque.
+
+Pour cette exposition, les deux artistes ont choisi de partir ensemble à Rosas, sur la côte catalane, afin de partager un même territoire et d’en confronter leurs regards. Entre les plages, les corps et l’horizon d’Adrien Da Silva, et le port, ses objets et les traces de l’activité humaine explorés par Rémi Tournier, leurs univers se croisent et se répondent autour de la Méditerranée et de ses paysages du quotidien.
+
+L’exposition est aussi l’occasion de découvrir un film documentaire réalisé par Adrien Vaucher, retraçant le voyage des artistes à Rosas et la poursuite de leur travail en atelier.
+
+Du mercredi au vendredi de 10h30 à 18h, le samedi de 15h à 18h30. Dimanche, lundi et mardi sur rendez-vous.`,
+      images: ['/journal/les-jours-sans-vent.webp', oeuvre('les-jours-sans-vent-1'), oeuvre('les-jours-sans-vent-3'), oeuvre('les-jours-sans-vent-4')],
+      category: 'exhibition',
+      link: 'https://www.galerie-cilas.com',
+      linkLabel: 'Le site de la Galerie Cilas',
+    },
     {
       id: 'catalogue-2026',
       title: 'Le catalogue 2026 est en ligne',
