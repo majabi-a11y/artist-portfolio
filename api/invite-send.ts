@@ -26,7 +26,7 @@ export async function POST(request: Request): Promise<Response> {
       return json(200, { sent: 1 });
     }
     if (body.mode !== 'send') return json(400, { error: 'Action inconnue.' });
-    const emails = await inviteEmails(token);
+    const emails = await inviteEmails(token, String(body.group ?? '') || undefined);
     if (!emails.length) return json(400, { error: 'Aucun invité dans la liste.' });
     if (emails.length > MAX_RECIPIENTS) return json(400, { error: `Plus de ${MAX_RECIPIENTS} invités : Gmail refuserait l’envoi.` });
     await sendBcc(emails, title, html, color);

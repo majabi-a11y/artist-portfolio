@@ -3,9 +3,10 @@ import { Users, Copy, Check, Send, Trash2 } from 'lucide-react';
 import type { SiteData } from '../data/defaultData';
 import { auth } from '../firebase';
 import { supabase } from '../supabase';
+import ContactPicker from './ContactPicker';
 import { ColorField } from './PortfolioEditor';
 
-interface Invite { email: string; nom: string | null; source: string; inscrit_le: string }
+interface Invite { email: string; nom: string | null; source: string; groupe?: string | null; inscrit_le: string }
 
 interface Props {
   data: SiteData;
@@ -24,6 +25,7 @@ export default function InvitesPanel({ data, replaceData }: Props) {
   const [preview, setPreview] = useState('');
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState('');
+  const [audience, setAudience] = useState('');
   const works = data.artworks.filter(a => !a.draft && a.images?.[0]);
 
   const call = async (mode: 'preview' | 'test' | 'send') => {
@@ -32,7 +34,7 @@ export default function InvitesPanel({ data, replaceData }: Props) {
     const res = await fetch('/api/invite-send', {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-      body: JSON.stringify({ mode, title, message, image, color }),
+      body: JSON.stringify({ mode, title, message, image, color, group: audience }),
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(body.error || `Erreur ${res.status}`);
@@ -48,7 +50,7 @@ export default function InvitesPanel({ data, replaceData }: Props) {
   }, [title, message, image, color]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const send = async (mode: 'test' | 'send') => {
-    if (mode === 'send' && !confirm(`Envoyer « ${title} » à tous les invités ? Un e-mail envoyé ne peut pas être repris.`)) return;
+    if (mode === 'send' && !confirm(`Envoyer « ${title} » à ${audience ? `tout le groupe ${audience}` : 'tous les invités'} ? Un e-mail envoyé ne peut pas être repris.`)) return;
     setSending(true);
     setStatus('');
     try {
@@ -71,6 +73,16 @@ export default function InvitesPanel({ data, replaceData }: Props) {
     const { data, error } = await supabase.rpc('adrien_da_silva_invites');
     if (error) setError(error.message);
     else setInvites(data as Invite[]);
+  };
+
+  const groups = [...new Set((invites ?? []).map(i => i.groupe).filter((g): g is string => !!g))].sort();
+
+  const regroup = async (i: Invite) => {
+    const next = prompt(`Groupe de ${i.email} (vide pour aucun)`, i.groupe ?? '');
+    if (next === null || !supabase) return;
+    const { error } = await supabase.rpc('adrien_da_silva_ajouter', { p_contacts: [{ email: i.email, nom: i.nom }], p_groupe: next.trim() || null });
+    if (error) setError(error.message);
+    else load();
   };
 
   const remove = async (email: string) => {
@@ -112,7 +124,8 @@ export default function InvitesPanel({ data, replaceData }: Props) {
             {invites.map(i => (
               <li key={i.email}>
                 <span>{i.nom ? `${i.nom} — ` : ''}{i.email}</span>
-                <small>{new Date(i.inscrit_le).toLocaleDateString('fr-FR')} · {i.source === 'contact' ? 'formulaire' : 'site'}</small>
+                <small>{new Date(i.inscrit_le).toLocaleDateString('fr-FR')} · {i.source === 'contact' ? 'formulaire' : i.source === 'gmail' ? 'contacts' : 'site'}</small>
+                <button type="button" className="invite-remove" onClick={() => regroup(i)}>{i.groupe || 'Groupe'}</button>
                 <button type="button" className="invite-remove" aria-label={`Retirer ${i.email}`} onClick={() => remove(i.email)}><Trash2 size={14} /></button>
               </li>
             ))}
@@ -120,6 +133,7 @@ export default function InvitesPanel({ data, replaceData }: Props) {
         </>
       )}
       {error && <p className="drive-error">{error}</p>}
+      {invites && <ContactPicker known={invites.map(i => i.email)} groups={groups} onAdded={load} />}
 
       <div className="pf-form" style={{ marginTop: 20 }}>
         <span className="drive-label">Envoyer une invitation</span>
@@ -129,6 +143,12 @@ export default function InvitesPanel({ data, replaceData }: Props) {
           <option value="">Sans image</option>
           {works.map(a => <option key={a.id} value={a.images[0]}>{a.title.trim()}</option>)}
         </select>
+        {groups.length > 0 && (
+          <select className="admin-input" aria-label="Destinataires" value={audience} onChange={e => setAudience(e.target.value)}>
+            <option value="">Tous les invités</option>
+            {groups.map(g => <option key={g} value={g}>Groupe : {g}</option>)}
+          </select>
+        )}
         <ColorField label="Couleur des e-mails (invitations et e-mails automatiques)" swatches={COLORS} value={color} cover={COVER} used={[]}
           onChange={c => replaceData({ ...data, mailColor: c })} />
         <p className="drive-hint">La couleur s'applique aux e-mails automatiques après « Sauvegarder ».</p>
@@ -138,7 +158,7 @@ export default function InvitesPanel({ data, replaceData }: Props) {
             <Send size={13} /> M'envoyer un test
           </button>
           <button type="button" className="btn btn-primary btn-sm" disabled={sending || !title.trim() || !message.trim()} onClick={() => send('send')}>
-            <Send size={13} /> {sending ? 'Envoi…' : 'Envoyer à tous les invités'}
+            <Send size={13} /> {sending ? 'Envoi…' : audience ? `Envoyer au groupe ${audience}` : 'Envoyer à tous les invités'}
           </button>
         </div>
         {status && <p className="drive-hint" role="status">{status}</p>}

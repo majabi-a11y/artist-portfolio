@@ -60,14 +60,15 @@ export async function adminEmail(idToken: string): Promise<string | null> {
 }
 
 /** Adresses des invités, lues avec le jeton de l'admin (la base ne les donne qu'à lui). */
-export async function inviteEmails(idToken: string): Promise<string[]> {
+export async function inviteEmails(idToken: string, group?: string): Promise<string[]> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/adrien_da_silva_invites`, {
     method: 'POST',
     headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${idToken}`, 'content-type': 'application/json' },
     body: '{}',
   });
   if (!res.ok) throw new Error(`Supabase ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  return ((await res.json()) as { email: string }[]).map(i => i.email);
+  const invites = (await res.json()) as { email: string; groupe?: string | null }[];
+  return invites.filter(i => !group || i.groupe === group).map(i => i.email);
 }
 
 /** Invitation : les invités en copie cachée, personne ne voit les autres adresses. */
