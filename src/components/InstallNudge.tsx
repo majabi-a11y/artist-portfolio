@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Bell, Download, EllipsisVertical, Share, SquarePlus, X } from 'lucide-react';
+import { Bell, Download, EllipsisVertical, MonitorDown, Share, SquarePlus, X } from 'lucide-react';
 import { canPromptInstall, enableNotifications, isIOS, isStandalone, notificationsGranted, onInstallChange, promptInstall } from '../lib/invite';
 
 const CLOSED = 'ads-nudge-ferme';
@@ -63,7 +63,7 @@ export default function InstallNudge() {
             : <li><EllipsisVertical size={15} /> Ouvrez le <strong>menu</strong> du navigateur</li>}
           {ios
             ? <li><SquarePlus size={15} /> Puis <strong>Sur l'écran d'accueil</strong></li>
-            : <li><Download size={15} /> Puis choisissez <strong>Installer</strong></li>}
+            : <li><MonitorDown size={15} /> Puis <strong>Installer et créer un raccourci</strong></li>}
         </ol>
       ) : (
         <>
