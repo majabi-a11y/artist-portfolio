@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FolderSync, Check, AlertCircle } from 'lucide-react';
 import type { Artwork, NewsPost, SiteData } from '../data/defaultData';
+import { SERIES } from '../data/defaultData';
 import { importFromDrive, missingFields, folderIdFromUrl, type ImportReport } from '../utils/driveImport';
 
 interface Props {
@@ -115,6 +116,10 @@ export default function DrivePanel({ data, replaceData, save, updateArtwork, upd
                         <input className="admin-input" placeholder="Prix (€)" inputMode="numeric" value={a.price ?? ''} onChange={e => updateArtwork(a.id, { price: e.target.value || undefined })} />
                       </div>
                       <input className="admin-input" placeholder="Signature (ex. Signée au dos)" value={a.signature ?? ''} onChange={e => updateArtwork(a.id, { signature: e.target.value || undefined })} />
+                      <select className="admin-input" aria-label="Série" value={a.serie ?? ''} onChange={e => updateArtwork(a.id, { serie: e.target.value || undefined })}>
+                        <option value="">Série : aucune</option>
+                        {SERIES.map(s => <option key={s.id} value={s.id}>{s.titre}</option>)}
+                      </select>
                     </>
                   )}
                   <textarea className="admin-input" rows={2} placeholder="Description (facultatif)" value={a.description} onChange={e => updateArtwork(a.id, { description: e.target.value })} />

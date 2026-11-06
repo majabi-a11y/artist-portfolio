@@ -9,6 +9,7 @@ import MultiImageUpload from '../components/MultiImageUpload';
 import DrivePanel from '../components/DrivePanel';
 import InvitesPanel from '../components/InvitesPanel';
 import PdfCovers from '../components/PdfCovers';
+import AddWork from '../components/AddWork';
 
 type Section = 'home' | 'profile' | 'artworks' | 'fresques' | 'news' | 'portfolio' | 'menu' | 'notifications' | 'theme' | 'tools';
 
@@ -194,6 +195,8 @@ export default function AdminPage() {
         <h1>Administration</h1>
         <p>Gérez tout le contenu de votre site</p>
       </div>
+
+      <AddWork data={data} save={save} uploadImage={uploadImage} />
 
       {/* Drive partagé + fiches à compléter */}
       <DrivePanel data={data} replaceData={replaceData} save={save}
