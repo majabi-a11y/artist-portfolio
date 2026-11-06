@@ -2316,8 +2316,6 @@ textarea.admin-input {
   letter-spacing: 0.04em;
   color: var(--color-text-muted);
 }
-.menu-taste-chips { display: inline-flex; gap: 3px; flex-shrink: 0; }
-.menu-taste-chips i { width: 14px; height: 5px; border-radius: 3px; }
 
 /* Inscription : Google d'abord, e-mail en repli */
 .invite-join { display: flex; flex-direction: column; gap: 10px; }

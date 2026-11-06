@@ -59,14 +59,14 @@ export default function BottomNav() {
   }, [data.homeNav, data.menuConfig, isPWA]);
 
   // Couleurs de la toile que ce visiteur a le plus regardée (sinon, celles réglées dans l'admin)
-  const [taste, setTaste] = useState<{ title: string; colours: string[] } | null>(null);
+  const [taste, setTaste] = useState<{ colours: string[] } | null>(null);
   useEffect(() => {
     if (!isOpen) return;
     const fav = favouriteArtwork(data.artworks);
     if (!fav) { setTaste(null); return; }
     let alive = true;
     artworkPalette(fav.images[0])
-      .then(colours => { if (alive) setTaste(colours.length ? { title: fav.title.trim(), colours } : null); })
+      .then(colours => { if (alive) setTaste(colours.length ? { colours } : null); })
       .catch(() => alive && setTaste(null));
     return () => { alive = false; };
   }, [isOpen, data.artworks]);
@@ -140,13 +140,6 @@ export default function BottomNav() {
             );
           })}
         </nav>
-
-        {taste && (
-          <p className="menu-taste">
-            <span className="menu-taste-chips">{taste.colours.map(c => <i key={c} style={{ background: c }} />)}</span>
-            Aux couleurs de « {taste.title} », l'œuvre que vous regardez le plus
-          </p>
-        )}
       </div>
     </>
   );
